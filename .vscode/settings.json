@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "tabpanel.h": "c",
+        "cmath": "c"
+    }
+}
