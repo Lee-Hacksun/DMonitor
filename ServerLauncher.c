@@ -38,7 +38,7 @@ int LaunchServer()
 }
 
 // TODO : Accept 로그 기록 
-void AcceptMultiClient(int serverSocket, void* (*threadAction)(void*))
+void AcceptMultiClient(int serverSocket)
 {
     struct sockaddr_in clientAddress;
 

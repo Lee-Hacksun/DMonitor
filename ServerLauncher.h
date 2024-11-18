@@ -5,7 +5,7 @@
 
 #define PORT 5000
 
-void InitServerSocket(int port, int* serverSocket, struct sockaddr_in* serverAddress);
+void InitServerSocket(int* serverSocket, struct sockaddr_in* serverAddress);
 int LaunchServer();
 void AcceptMultiClient(int serverSocket);
 
