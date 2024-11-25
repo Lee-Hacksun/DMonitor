@@ -15,9 +15,6 @@
 
 pthread_rwlock_t  g_RWLock;
 
-  git config --global user.email "you@example.com"
-  git config --global user.name "Your Name"
-
 // TODO : 뮤텍스 사용 변수
 // LinkedList fireDetectClientID;
 
