@@ -81,12 +81,12 @@ clean: CMakeFiles/DMonitor.dir/clean
 CMakeFiles/DMonitor.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/DMonitor.dir/build.make CMakeFiles/DMonitor.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/DMonitor.dir/build.make CMakeFiles/DMonitor.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/laon/IoT/DMonitor/build/CMakeFiles --progress-num=1,2,3,4,5,6,7 "Built target DMonitor"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/laon/IoT/DMonitor/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9 "Built target DMonitor"
 .PHONY : CMakeFiles/DMonitor.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/DMonitor.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/laon/IoT/DMonitor/build/CMakeFiles 7
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/laon/IoT/DMonitor/build/CMakeFiles 9
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/DMonitor.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/laon/IoT/DMonitor/build/CMakeFiles 0
 .PHONY : CMakeFiles/DMonitor.dir/rule

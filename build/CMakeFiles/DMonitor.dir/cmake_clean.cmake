@@ -11,6 +11,10 @@ file(REMOVE_RECURSE
   "CMakeFiles/DMonitor.dir/ServerLauncher.c.o.d"
   "CMakeFiles/DMonitor.dir/TabPanel.c.o"
   "CMakeFiles/DMonitor.dir/TabPanel.c.o.d"
+  "CMakeFiles/DMonitor.dir/Tree.c.o"
+  "CMakeFiles/DMonitor.dir/Tree.c.o.d"
+  "CMakeFiles/DMonitor.dir/cjson/cJSON.c.o"
+  "CMakeFiles/DMonitor.dir/cjson/cJSON.c.o.d"
   "DMonitor"
   "DMonitor.pdb"
 )

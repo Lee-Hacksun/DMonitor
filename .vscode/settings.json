@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "tabpanel.h": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "stdlib.h": "c",
+        "ncurses.h": "c"
     }
 }
