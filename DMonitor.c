@@ -4,10 +4,12 @@
 
 #include "ClientManager.h"
 #include "GUIManager.h"
+#include "Sensors.h"
 
 int main()
 {
     int inputPipe[2];
+    runSensors();
 
     if ( pipe(inputPipe) == -1)
     {

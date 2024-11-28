@@ -12,6 +12,8 @@ set(SOURCES
     DMonitorThread.c
     Tree.c
     cjson/cJSON.c
+    Sensors.c
+    SensorLog.c
 )
 
 add_executable(DMonitor ${SOURCES})
