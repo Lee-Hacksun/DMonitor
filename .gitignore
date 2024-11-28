@@ -53,4 +53,4 @@ dkms.conf
 
 # CMake
 DMonitor/build/*
-!DMonitor/bulid/build.sh
+!DMonitor/build/build.sh
