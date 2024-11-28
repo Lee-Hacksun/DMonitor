@@ -1,7 +1,9 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
+#include "ClientManager.h"
 #include "DMonitorThread.h"
 
 int clientCount = 0;
@@ -10,9 +12,20 @@ pthread_mutex_t mutex;
 
 void* DMonitorThreadAction(void* arg)
 {
-    int client = *((int*)arg);
-    printf("arg is : %d\n", client);
+    while(1)
+    {
+        FILE* log = fopen("test.txt", "a");
+        ReadLock(&g_rwlock);
+        fprintf(log, "%d:%d:%d\n", g_color.Red, g_color.Green, g_color.Blue);
+        ReadUnlock(&g_rwlock);
+        fflush(log);
+        sleep(5);
 
+        // 초기화, 클라이언트 아이디 가져오기
+        // 여러 값 비교 및, 해당하는 값 있으면 실행
+    }
+
+    close(*(int*)arg);
     free(arg);
 }
 

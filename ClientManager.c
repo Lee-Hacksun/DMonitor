@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 #include <unistd.h>
 
@@ -9,34 +10,40 @@
 #include "ClientManager.h"
 #include "DebugUtil.h"
 #include "DMonitorThread.h"
+#include "RWLock.h"
 #include "ServerLauncher.h"
 
 #pragma region ThreadVariable
 
-pthread_rwlock_t  g_RWLock;
-
 // TODO : 뮤텍스 사용 변수
 // LinkedList fireDetectClientID;
 
-// TODO : RWLock 사용 변수
-Color g_color;
-char* g_colorClientID;
+RWLock g_rwlock;
+Color g_color = 
+{
+0, 0, 0
+};
+char g_colorClientID[BUFFER_SIZE] = "";
 
 #pragma endregion
 
 void SetupColor(char* clientID, Color color)
 {
+    strcpy(g_colorClientID, clientID);
 
+    g_color.Red = color.Red;
+    g_color.Green = color.Green;
+    g_color.Blue = color.Blue;
 }
 
 void RunClientManager(int inputPipe)
 {  
     int serverSocket = LaunchServer();
 
+    InitRWLock(&g_rwlock);
+
     char buffer[BUFFER_SIZE];
     ssize_t readSize;
-
-    pthread_rwlock_init(&g_RWLock, NULL);
 
     EventPolling eventPolling;
     InitEventPolling(&eventPolling);
@@ -62,9 +69,6 @@ void RunClientManager(int inputPipe)
 
                 if (eventPolling.events[i].data.fd == inputPipe)
                 {
-                    FILE* pipe = fopen("test.txt", "a");
-                    Color color;
-
                     readSize = read(inputPipe, buffer, sizeof(buffer) - 1);
                     if (readSize < 0)
                     {
@@ -72,36 +76,41 @@ void RunClientManager(int inputPipe)
                         continue;
                     }
 
-                    buffer[readSize] = '\0';
-
-                    cJSON* json = cJSON_Parse(buffer);
-                    if (json == NULL)
+                    if (readSize > 1)
                     {
-                        ASSERT(0, "Failed to parse json");
-                        continue;
+                        Color color;
+                        
+                        buffer[readSize] = '\0';
+
+                        cJSON* json = cJSON_Parse(buffer);
+                        if (json == NULL)
+                        {
+                            ASSERT(0, "Failed to parse json");
+                            continue;
+                        }
+
+                        char* clientName = cJSON_GetObjectItem(json, "clientID")->valuestring;
+                        if (clientName == NULL)
+                        {
+                            ASSERT(0, "Failed to parse json");
+                            continue;
+                        }
+
+                        cJSON* jsonColor = cJSON_GetObjectItem(json, "color");
+                        if (jsonColor == NULL)
+                        {
+                            ASSERT(0, "Failed to parse json");
+                            continue;
+                        }
+
+                        color.Red = cJSON_GetObjectItem(jsonColor, "Red")->valueint;
+                        color.Green = cJSON_GetObjectItem(jsonColor, "Green")->valueint;
+                        color.Blue = cJSON_GetObjectItem(jsonColor, "Blue")->valueint;
+
+                        WriteLock(&g_rwlock);
+                        SetupColor(clientName, color);
+                        WriteUnLock(&g_rwlock);
                     }
-
-                    char* clientName = cJSON_GetObjectItem(json, "clientID")->valuestring;
-                    if (clientName == NULL)
-                    {
-                        ASSERT(0, "Failed to parse json");
-                        continue;
-                    }
-
-                    cJSON* jsonColor = cJSON_GetObjectItem(json, "color");
-                    if (jsonColor == NULL)
-                    {
-                        ASSERT(0, "Failed to parse json");
-                        continue;
-                    }
-
-                    color.Red = cJSON_GetObjectItem(jsonColor, "Red")->valueint;
-                    color.Green = cJSON_GetObjectItem(jsonColor, "Green")->valueint;
-                    color.Blue = cJSON_GetObjectItem(jsonColor, "Blue")->valueint;
-
-
-                    fprintf(pipe, "clientID: %s\n Color: %d, %d, %d\n", clientName, color.Red, color.Green, color.Blue);
-                    fclose(pipe);
                 }
             }
         }

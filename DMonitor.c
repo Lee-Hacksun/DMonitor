@@ -5,8 +5,16 @@
 #include "ClientManager.h"
 #include "GUIManager.h"
 
+#include "csv.h"
+#include "DebugUtil.h"
+
 int main()
 {
+    #if _TEST
+
+    ParseCSV("../test.csv");
+
+    #elif !_TEST
     int inputPipe[2];
 
     if ( pipe(inputPipe) == -1)
@@ -34,4 +42,6 @@ int main()
     }
 
     exit(0);
+
+    #endif
 }

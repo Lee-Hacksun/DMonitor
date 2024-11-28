@@ -11,6 +11,8 @@ set(SOURCES
     ServerLauncher.c
     DMonitorThread.c
     Tree.c
+    RWLock.c
+    csv.c
     cjson/cJSON.c
 )
 

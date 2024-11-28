@@ -7,6 +7,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/DMonitor.dir/DMonitorThread.c.o.d"
   "CMakeFiles/DMonitor.dir/GUIManager.c.o"
   "CMakeFiles/DMonitor.dir/GUIManager.c.o.d"
+  "CMakeFiles/DMonitor.dir/RWLock.c.o"
+  "CMakeFiles/DMonitor.dir/RWLock.c.o.d"
   "CMakeFiles/DMonitor.dir/ServerLauncher.c.o"
   "CMakeFiles/DMonitor.dir/ServerLauncher.c.o.d"
   "CMakeFiles/DMonitor.dir/TabPanel.c.o"
@@ -15,6 +17,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/DMonitor.dir/Tree.c.o.d"
   "CMakeFiles/DMonitor.dir/cjson/cJSON.c.o"
   "CMakeFiles/DMonitor.dir/cjson/cJSON.c.o.d"
+  "CMakeFiles/DMonitor.dir/csv.c.o"
+  "CMakeFiles/DMonitor.dir/csv.c.o.d"
   "DMonitor"
   "DMonitor.pdb"
 )

@@ -68,7 +68,7 @@ void SendColor(int fd, char* clientID, Color color)
         return;
     }
 
-    write(fd, jsonString, strlen(jsonString));
+    ssize_t a = write(fd, jsonString, strlen(jsonString));
 
     free(jsonString);
     cJSON_Delete(json);
