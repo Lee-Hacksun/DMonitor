@@ -10,6 +10,10 @@ set(SOURCES
     TabPanel.c 
     ServerLauncher.c
     DMonitorThread.c
+    Tree.c
+    RWLock.c
+    csv.c
+    cjson/cJSON.c
 )
 
 add_executable(DMonitor ${SOURCES})

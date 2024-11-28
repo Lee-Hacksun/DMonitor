@@ -38,7 +38,7 @@ PanelMessage* NewPanelMessage(char** msg, size_t size)
     return panelMessage;
 }
 
-Panel* NewPanNel(int height, int width, int startY, int startX, PanelMessage* panelMessage)
+Panel* NewPanel(int height, int width, int startY, int startX, PanelMessage* panelMessage)
 {
     ASSERT(height > -1, "height must be positive.");
     ASSERT(width > -1, "width must be positive.");
@@ -52,28 +52,106 @@ Panel* NewPanNel(int height, int width, int startY, int startX, PanelMessage* pa
     localPanel->width = width;
     localPanel->startY = startY;
     localPanel->startX = startX;
+    localPanel->offset = 0;
+    localPanel->selected = 0;
     localPanel->panelMessage = panelMessage;
 
     return localPanel;
 }
 
-// TODO : 선택(하이라이트) 구현 
-void DrawPanel(Panel* panel, WINDOW* window)
+Panel* wNewPanel(WINDOW* window, int startY, int startX, PanelMessage* panelMessage)
 {
-    int maxY = 0;
-    int maxX = 0;
+    int panelHeight;
+    int panelWidth;
+    getmaxyx(window, panelHeight, panelWidth);
 
-    getmaxyx(window, maxY, maxX);
-    
+    Panel* panel = NewPanel(panelHeight - MARGIN_TOP * 2, panelWidth - MARGIN_LEFT * 2, startY , startX + MARGIN_LEFT, panelMessage);
+    return panel;
+}
 
-    for (int i = 0; i < panel->panelMessage->size; i++)
+void IncreasePanelOffset(Panel* panel)
+{
+    if (panel->offset + panel->height < panel->panelMessage->size)
     {
-        if (panel->startY + i == (maxY - 2))
+        panel->offset++;
+    }
+}
+
+void DecreasePanelOffset(Panel* panel)
+{
+    if (panel->offset != 0)
+    {
+        panel->offset--;
+    }
+}
+
+void IncreasePanelSelect(Panel* panel)
+{
+    if (panel->selected + panel->startY == panel->height)
+    {
+        IncreasePanelOffset(panel);
+    }
+    else if (panel->selected < panel->panelMessage->size - 1)
+    {
+        panel->selected++;
+    }
+}
+
+void DecreasePanelSelect(Panel* panel)
+{
+    if (panel->selected == 0)
+    {
+        DecreasePanelOffset(panel);
+    }
+    else
+    {
+        panel->selected--;
+    }
+}
+
+// TODO : 패딩, 마진 상수로 변경
+void DrawPanel( WINDOW* window, Panel* panel, int AlignOption)
+{
+    wclear(window);
+    box(window, 0, 0);
+
+    for (int i = panel->offset; (i < panel->panelMessage->size + panel->offset) && (i < panel->panelMessage->size); i++)
+    {  
+        int tabIndex = i - panel->offset;
+        if (tabIndex >= panel->height)
         {
-            // TODO : pre, next 선택지 구현
             break;
         }
-        mvwprintw(window, panel->startY + i, panel->startX, "%s", panel->panelMessage->informations[i]);
+
+        if (tabIndex == panel->selected)
+        {
+            wattron(window, A_REVERSE);
+        }
+
+        switch (AlignOption)
+        {
+        case LEFT:
+            mvwprintw(window, panel->startY + tabIndex, panel->startX, "%s", panel->panelMessage->informations[i]);    
+            break;
+                
+        case CENTER:
+            mvwprintw(window, panel->startY + tabIndex, (panel->width - strlen(panel->panelMessage->informations[i])) / 2, "%s", panel->panelMessage->informations[i]);    
+            break;
+
+        case RIGHT:
+            // The reason for subtracting 1 from the comparison value is because of the border of the window
+            mvwprintw(window, panel->startY + tabIndex, panel->width - strlen(panel->panelMessage->informations[i]) - 1, "%s", panel->panelMessage->informations[i]);    
+            break;
+
+        default:
+            ASSERT(0, "AlignOption is Invalid value")
+            break;
+        }
+
+        if (tabIndex == panel->selected) 
+        {
+            wattroff(window, A_REVERSE);
+        }
     }
 
     wrefresh(window);

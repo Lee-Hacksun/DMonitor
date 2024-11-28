@@ -22,4 +22,10 @@
     #define ASSERT(exp, msg)
 #endif
 
+#ifdef TEST
+    #define _TEST 1
+#else 
+    #define _TEST 0
+#endif
+
 #endif

@@ -2,8 +2,12 @@
     "files.associations": {
         "tabpanel.h": "c",
         "cmath": "c",
-        "unistd.h": "c",
-        "dht11_sensor.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "ncurses.h": "c",
+        "clientmanager.h": "c",
+        "csv.h": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c"
     }
 }

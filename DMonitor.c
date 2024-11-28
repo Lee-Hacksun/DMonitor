@@ -5,24 +5,43 @@
 #include "ClientManager.h"
 #include "GUIManager.h"
 
+#include "csv.h"
+#include "DebugUtil.h"
+
 int main()
 {
-    pid_t pid;
+    #if _TEST
 
+    ParseCSV("../test.csv");
+
+    #elif !_TEST
+    int inputPipe[2];
+
+    if ( pipe(inputPipe) == -1)
+    {
+        perror("Failed to create pipe.");
+        exit(1);
+    }
+
+    pid_t pid;
     pid = fork();
 
     if (pid == -1)
     {
-        // TODO : Fork에 대한 error handler 추가 
+        perror("Failed to fork process");
     }
     else if (pid == 0)
-    {
-        RunClientManager();
+    {   
+        close(inputPipe[1]);
+        RunClientManager(inputPipe[0]);
     }
     else
     {
-        RunGUIManager();
+        close(inputPipe[0]);
+        RunGUIManager(inputPipe[1]);
     }
 
     exit(0);
+
+    #endif
 }
