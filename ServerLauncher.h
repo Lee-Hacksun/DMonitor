@@ -21,6 +21,7 @@ void InitServerSocket(int* serverSocket, struct sockaddr_in* serverAddress);
 void InitEventPolling(EventPolling* eventPolling);
 void AddEventPolling(EventPolling* eventPolling, int FileDescriptor);
 void DestroyEventPolling(EventPolling* eventPolling);
+
 int LaunchServer();
 void AcceptMultiClient(int serverSocket);
 
