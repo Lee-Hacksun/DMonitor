@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+
 #include "SensorLog.h"
 
 void WriteLog(const char *client_id, float temp, float humi, const char *color,
