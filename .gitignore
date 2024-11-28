@@ -52,5 +52,5 @@ Mkfile.old
 dkms.conf
 
 # CMake
-out/build/Clang 16.0.0 arm64-apple-darwin24.2.0/Makefile
-build/Makefile
+DMonitor/build/*
+!DMonitor/bulid/build.sh
