@@ -3,76 +3,98 @@
 #include <string.h>
 
 #include "csv.h"
+#include "DebugUtil.h"
 
-int GetFieldCount(char* header)
+char** parse_csv_line(const char *line, int *field_count) 
 {
-    int size = 0;
+    char** fields = NULL;
+    int count = 0;
+    const char* start = line;
+    const char* end;
 
-    strtok(header, ",");
-    size++;
-
-    char* isDone;
-    while(1)
+    while ((end = strchr(start, ',')) != NULL) 
     {
-        if ((isDone = strtok(NULL, ",")) == NULL)
-        {
-            break;
-        }
-        else
-        {
-            size++;
-        }
+        size_t length = end - start;
+        fields = realloc(fields, (count + 1) * sizeof(char *));
+        fields[count] = malloc(length + 1);
+        strncpy(fields[count], start, length);
+        fields[count][length] = '\0'; // Null-terminate the field
+        count++;
+        start = end + 1;
     }
 
-    return size;
-}
-
-int GetElementCount(char* CSVData)
-{
-    int size = 0;
-    strtok(CSVData, "\n");
-    size++;
-
-    char* isDone;
-    while(1)
+    // 마지막 필드 처리
+    if (*start != '\0') 
     {
-        if ((isDone = strtok(NULL, "\n")) == NULL)
-        {
-            break;
-        }
-        else
-        {
-            size++;
-        }
+        fields = realloc(fields, (count + 1) * sizeof(char *));
+        fields[count] = strdup(start); // 마지막 필드 복사
+        count++;
     }
 
-    return size;
+    *field_count = count;
+    return fields;
 }
 
-void** ParseCSV(char* fileName)
+// 메모리 해제 함수
+void free_csv_data(CSV* csv) 
 {
-    FILE* csv = fopen(fileName, "r");
-    if(csv == NULL)
+    int i = 0;
+    while (csv->data[i] != NULL)
     {
-        perror("fopen error");
+        for (int j = 0; j < csv->fieldSize[i]; j++) 
+        {
+            free(csv->data[i][j]);
+        }
+        free(csv->data[i]);
+        i++;
+    }
+    free(csv->data);
+    free(csv->fieldSize);
+}
+
+CSV* ParseCSV(char* fileName) 
+{
+    FILE *file = fopen(fileName, "r");
+    if (!file)
+    {
+        perror("파일 열기 실패");
         return NULL;
     }
 
-    fseek(csv, 0, SEEK_END);
-    int size = ftell(csv);
+    char *line = NULL;
+    size_t line_size = 0;
+    int is_header = 1; // 첫 번째 줄은 헤더로 가정
 
-    char* csvData = malloc(sizeof(char) * size + 1);
-    memset(csvData, 0, size + 1);
+    CSV* csv = malloc(sizeof(CSV));
 
-    fseek(csv, 0, SEEK_SET);
-    fread(csvData, sizeof(char), size + 1, csv);
+    csv->data = NULL;
+    csv->fieldSize = NULL;
+    int row_count = 0;
 
-    // printf("%s", csvData);
+    while (getline(&line, &line_size, file) != -1) 
+    {
+        // 개행 문자 제거
+        line[strcspn(line, "\r\n")] = '\0';
 
-    char* data = strchr(csvData, '\n');
-    char* header = strtok(csvData, "\n");
-    int elementCount = GetFieldCount(header);
-    printf("%d", GetElementCount(data + 1));
+        if (is_header) 
+        {
+            // 헤더는 무시
+            is_header = 0;
+            continue;
+        }
 
-    void* elements;
+        int field_count;
+        char** fields =  parse_csv_line(line, &field_count);
+
+        csv->data = realloc(csv->data, (row_count + 1) * sizeof(char**));
+        csv->fieldSize = realloc(csv->fieldSize, (row_count + 1) * sizeof(int));
+        csv->data[row_count] = fields;
+        csv->fieldSize[row_count] = field_count;
+        row_count++;
+    }
+
+    // 동적으로 할당된 라인 메모리 해제
+    free(line);
+    fclose(file);
+    return csv;
 }
