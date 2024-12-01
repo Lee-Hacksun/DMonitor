@@ -5,7 +5,7 @@
 #include "csv.h"
 #include "DebugUtil.h"
 
-char** parse_csv_line(const char *line, int *field_count) 
+char** ParseCSVLine(const char *line, int *field_count) 
 {
     char** fields = NULL;
     int count = 0;
@@ -18,83 +18,73 @@ char** parse_csv_line(const char *line, int *field_count)
         fields = realloc(fields, (count + 1) * sizeof(char *));
         fields[count] = malloc(length + 1);
         strncpy(fields[count], start, length);
-        fields[count][length] = '\0'; // Null-terminate the field
+        fields[count][length] = '\0'; 
         count++;
         start = end + 1;
     }
 
-    // 마지막 필드 처리
     if (*start != '\0') 
     {
         fields = realloc(fields, (count + 1) * sizeof(char *));
-        fields[count] = strdup(start); // 마지막 필드 복사
+        fields[count] = strdup(start); 
         count++;
     }
 
+    ASSERT(*field_count == -1 || *field_count == count, "All fields in the csv file must be the same size.");
     *field_count = count;
     return fields;
 }
 
-// 메모리 해제 함수
-void free_csv_data(CSV* csv) 
+void DestroyCSV(CSV* csv) 
 {
-    int i = 0;
-    while (csv->data[i] != NULL)
+    if (csv == NULL)
     {
-        for (int j = 0; j < csv->fieldSize[i]; j++) 
+        return;
+    }
+
+    for (int i = 0; i < csv->csvSize; i++)
+    {
+        for (int j = 0; j < csv->fieldSize; j++) 
         {
             free(csv->data[i][j]);
         }
         free(csv->data[i]);
-        i++;
     }
+
     free(csv->data);
-    free(csv->fieldSize);
+    free(csv);
 }
 
-CSV* ParseCSV(char* fileName) 
+CSV* ParseCSV(FILE* file) 
 {
-    FILE *file = fopen(fileName, "r");
-    if (!file)
-    {
-        perror("파일 열기 실패");
-        return NULL;
-    }
-
     char *line = NULL;
     size_t line_size = 0;
-    int is_header = 1; // 첫 번째 줄은 헤더로 가정
+    int isHeader = 1; 
 
     CSV* csv = malloc(sizeof(CSV));
 
     csv->data = NULL;
-    csv->fieldSize = NULL;
-    int row_count = 0;
+    csv->fieldSize = -1;
+    int rowCount = 0;
 
     while (getline(&line, &line_size, file) != -1) 
     {
-        // 개행 문자 제거
         line[strcspn(line, "\r\n")] = '\0';
 
-        if (is_header) 
+        if (isHeader) 
         {
-            // 헤더는 무시
-            is_header = 0;
+            isHeader = 0;
             continue;
         }
 
-        int field_count;
-        char** fields =  parse_csv_line(line, &field_count);
+        char** fields =  ParseCSVLine(line, &csv->fieldSize);
 
-        csv->data = realloc(csv->data, (row_count + 1) * sizeof(char**));
-        csv->fieldSize = realloc(csv->fieldSize, (row_count + 1) * sizeof(int));
-        csv->data[row_count] = fields;
-        csv->fieldSize[row_count] = field_count;
-        row_count++;
+        csv->data = realloc(csv->data, (rowCount + 1) * sizeof(char**));
+        csv->data[rowCount] = fields;
+        rowCount++;
     }
+    csv->csvSize = rowCount;
 
-    // 동적으로 할당된 라인 메모리 해제
     free(line);
-    fclose(file);
     return csv;
 }

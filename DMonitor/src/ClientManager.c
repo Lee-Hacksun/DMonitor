@@ -1,8 +1,11 @@
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "cjson/cJSON.h"
 
@@ -18,12 +21,13 @@
 // TODO : 뮤텍스 사용 변수
 // LinkedList fireDetectClientID;
 
-RWLock g_rwlock;
+RWLock g_color_rwlock;
 Color g_color = 
 {
 0, 0, 0
 };
 char g_colorClientID[BUFFER_SIZE] = "";
+char EXEPath[PATH_MAX];
 
 #pragma endregion
 
@@ -36,11 +40,82 @@ void SetupColor(char* clientID, Color color)
     g_color.Blue = color.Blue;
 }
 
+void SetEXEPath()
+{
+    ssize_t len = readlink("/proc/self/exe", EXEPath, sizeof(EXEPath));
+
+    if (len != -1)
+    {
+        EXEPath[len] = '\0';
+        strcpy(EXEPath,dirname(EXEPath));
+        printf("Setup EXEPath : %s\n", EXEPath);
+    }
+    else
+    {
+        perror("readlink");
+    }
+}
+
+void CheckWorkingDirectory()
+{
+    char logPath[PATH_MAX];
+    char* logDir = "/log";
+    
+    ASSERT(strlen(EXEPath) + strlen("/log") < PATH_MAX, "경로의 길이가 너무 깁니다.\n");
+    snprintf(logPath, sizeof(logPath), "%s%s", EXEPath, logDir);
+    
+    struct stat st = {0};
+
+    printf("%s 작업폴더 존재 확인\n", logPath);
+    if (stat(logPath, &st) == -1)
+    {
+        printf("작업폴더 존재하지 않습니다.\n");
+        if (mkdir(logPath, 0700) != 0)
+        {
+            perror("작업폴더 생성 실패");
+        }
+        else 
+        {
+            printf("작업폴더를 생성했습니다.\n");
+        }
+    }
+    else 
+    {
+        printf("작업폴더가 존재합니다.\n");
+    }
+}
+
+void CheckClientListFile()
+{
+    char path[PATH_MAX];
+    strcpy(path, EXEPath);
+    strcat(path, CLIENT_LIST_PATH);
+    FILE* clientList = fopen(path, "r");
+
+    if (clientList == NULL)
+    {
+        printf("%s 파일이 없습니다. 클라이언트 리스트 파일을 생성합니다.\n", path);
+        clientList = fopen(path, "w");
+        if (clientList == NULL)
+        {
+            perror("fopen");
+        }
+
+        // TODO : 초기값 설정
+        fprintf(clientList, "clientID,Hello\n");
+    }
+
+    fclose(clientList);
+}
+
 void RunClientManager(int inputPipe)
 {  
     int serverSocket = LaunchServer();
 
-    InitRWLock(&g_rwlock);
+    InitRWLock(&g_color_rwlock);
+    SetEXEPath();
+    CheckWorkingDirectory();
+    CheckClientListFile();
 
     char buffer[BUFFER_SIZE];
     ssize_t readSize;
@@ -107,9 +182,9 @@ void RunClientManager(int inputPipe)
                         color.Green = cJSON_GetObjectItem(jsonColor, "Green")->valueint;
                         color.Blue = cJSON_GetObjectItem(jsonColor, "Blue")->valueint;
 
-                        WriteLock(&g_rwlock);
+                        WriteLock(&g_color_rwlock);
                         SetupColor(clientName, color);
-                        WriteUnLock(&g_rwlock);
+                        WriteUnLock(&g_color_rwlock);
                     }
                 }
             }
