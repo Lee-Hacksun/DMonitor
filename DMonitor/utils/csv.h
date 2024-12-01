@@ -4,11 +4,12 @@
 typedef struct _CSV 
 {
     char*** data;
-    int* fieldSize;
+    int fieldSize;
+    int csvSize;
 } CSV;
 
-char** parse_csv_line(const char* line, int* field_count);
-void free_csv_data(CSV* csv);
-CSV* ParseCSV(char* fileName);
+char** ParseCSVLine(const char* line, int* field_count);
+void DestroyCSV(CSV* csv);
+CSV* ParseCSV(FILE* fileName);
 
 #endif
