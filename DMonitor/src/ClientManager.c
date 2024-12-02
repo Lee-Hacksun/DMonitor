@@ -22,11 +22,12 @@
 // LinkedList fireDetectClientID;
 
 RWLock g_color_rwlock;
-Color g_color = 
-{
-0, 0, 0
-};
+Color g_color = {0, 0, 0};
 char g_colorClientID[BUFFER_SIZE] = "";
+
+RWLock g_control_code_rwlock;
+unsigned char g_control_code = 0;
+
 char EXEPath[PATH_MAX];
 
 #pragma endregion
@@ -56,14 +57,21 @@ void SetEXEPath()
     }
 }
 
+char* GetLogDirPath()
+{
+    char* logPath = malloc(sizeof(char) * PATH_MAX);
+
+    ASSERT(strlen(EXEPath) + strlen(LOG_DIR_PATH) < PATH_MAX, "경로의 길이가 너무 깁니다.\n");
+    strcpy(logPath, EXEPath);
+    strcat(logPath, LOG_DIR_PATH);
+
+    return logPath;
+}
+
 void CheckWorkingDirectory()
 {
-    char logPath[PATH_MAX];
-    char* logDir = "/log";
-    
-    ASSERT(strlen(EXEPath) + strlen("/log") < PATH_MAX, "경로의 길이가 너무 깁니다.\n");
-    snprintf(logPath, sizeof(logPath), "%s%s", EXEPath, logDir);
-    
+    char* logPath = GetLogDirPath();
+
     struct stat st = {0};
 
     printf("%s 작업폴더 존재 확인\n", logPath);
@@ -83,13 +91,15 @@ void CheckWorkingDirectory()
     {
         printf("작업폴더가 존재합니다.\n");
     }
+
+    free(logPath);
 }
 
 void CheckClientListFile()
 {
-    char path[PATH_MAX];
-    strcpy(path, EXEPath);
+    char* path = GetLogDirPath();
     strcat(path, CLIENT_LIST_PATH);
+
     FILE* clientList = fopen(path, "r");
 
     if (clientList == NULL)
@@ -102,10 +112,11 @@ void CheckClientListFile()
         }
 
         // TODO : 초기값 설정
-        fprintf(clientList, "clientID,Hello\n");
+        fprintf(clientList, "clientID,Species,Red,Green,Blue\n");
     }
 
     fclose(clientList);
+    free(path);
 }
 
 void RunClientManager(int inputPipe)
@@ -113,6 +124,8 @@ void RunClientManager(int inputPipe)
     int serverSocket = LaunchServer();
 
     InitRWLock(&g_color_rwlock);
+    InitRWLock(&g_control_code_rwlock); 
+
     SetEXEPath();
     CheckWorkingDirectory();
     CheckClientListFile();
@@ -189,6 +202,8 @@ void RunClientManager(int inputPipe)
                 }
             }
         }
+
+        // 제어코드 보내는 코드
     }
     DestroyEventPolling(&eventPolling);
     close(serverSocket);

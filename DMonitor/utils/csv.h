@@ -1,6 +1,8 @@
 #ifndef CSV_H
 #define CSV_H
 
+#include <stdio.h>
+
 typedef struct _CSV 
 {
     char*** data;
