@@ -13,6 +13,7 @@ set(SOURCES
     ServerLauncher.c
     DMonitorThread.c
     Tree.c
+    Color.c
     ../utils/RWLock.c
     ../utils/csv.c
     ../utils/cjson/cJSON.c
