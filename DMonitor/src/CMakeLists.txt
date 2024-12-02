@@ -42,5 +42,6 @@ endif()
 find_package(Curses REQUIRED)
 
 target_link_libraries(DMonitor PRIVATE ${CURSES_LIBRARIES})
+target_link_libraries(DMonitor PRIVATE m)
 
 include_directories(${CURSES_INCLUDE_DIRS})
