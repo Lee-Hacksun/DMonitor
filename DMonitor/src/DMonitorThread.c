@@ -1,3 +1,4 @@
+#include <math.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -79,7 +80,7 @@ void ProcessDataLog(char* clientID, TotalData* totalData)
         fprintf(sensorLog, "ClientID,flame,gas,humidity,light,temp,Red,Green,Blue,ColorDistance\n");
     }
 
-    fprintf(sensorLog, "%s,%d,%d,%d,%d,%d,%d,%d,%d",
+    fprintf(sensorLog, "%s,%d,%d,%d,%d,%d,%d,%d,%d,%d",
     clientID, 
     avgSensorData.flame, 
     avgSensorData.gas, 
@@ -314,7 +315,7 @@ void* DMonitorThreadAction(void* arg)
         totalData->sensorData[totalData->count++] = sensorData;
 
         //   TODO : 실제로 불이 나는 조건으로 변경
-        if (sensorData->flame && sensorData->gas)
+        if (!(sensorData->flame && sensorData->gas))
         {
             controlCode |= EMERGENCY | IS_CHANGED | BUZZER;
         }
