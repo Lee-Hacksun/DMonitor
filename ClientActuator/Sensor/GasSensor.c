@@ -26,9 +26,10 @@ int InitGasSensor(void)
     return 0;
 }
 
-int ReadGasSensor(char channel) {
+int ReadGasSensor() {
     unsigned char buf[3];
     int adcValue = 0;
+    char channel = ADC_CH6;
 
     buf[0] = 0x06 | (channel >> 6 & 0x03);
     buf[1] = (channel << 2) & 0x78;

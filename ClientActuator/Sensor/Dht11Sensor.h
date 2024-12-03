@@ -1,7 +1,8 @@
 #ifndef DHT11_SENSOR_H
 #define DHT11_SENSOR_H
 
-typedef struct {
+typedef struct _DHT11_Data
+{
     float temperature;
     float humidity;
 } DHT11_Data;
@@ -10,6 +11,6 @@ typedef struct {
 int InitDht11Sensor(void);
 
 // dht11 센서 값 읽는 함수
-DHT11_Data ReadDht11Data(void);
+DHT11_Data ReadDht11Sensor(void);
 
 #endif

@@ -2,7 +2,8 @@
 #define COLOR_H
 
 // 컬러 센서 데이터 구조체
-typedef struct {
+typedef struct _ColorData
+{
     int red;
     int green;
     int blue;

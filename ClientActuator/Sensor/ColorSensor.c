@@ -13,7 +13,9 @@
 #define COLOR_OUT 4
 #define COLOR_LED 5
 
-#include "colorSensor.h"
+#include "ColorSensor.h"
+
+unsigned int counter = 0;
 
 void Count()
 {

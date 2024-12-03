@@ -10,15 +10,38 @@
 
         // 실수 난수 생성
         float getRandomRangeFloat(float min, float max);
-    #else
-        #include "Sensor/ColorSensor.c"
-        #include "Sensor/Dht11Sensor.c"
-        #include "Sensor/FlameSensor.c"
-        #include "Sensor/GasSensor.c"
-        #include "Sensor/LightSensor.c"
 
-        typedef struct
+        typedef struct {
+            float temperature;
+            float humidity;
+        } Dht11Data;
+
+        typedef struct {
+            int red;
+            int green;
+            int blue;
+        } ColorData;
+
+        typedef struct {
+            const char* clientId;
+            Dht11Data dht11;
+            ColorData color;
+            int light;
+            int flame;
+            int gas;
+        } SensorData;
+
+
+    #else
+        #include "ColorSensor.h"
+        #include "Dht11Sensor.h"
+        #include "FlameSensor.h"
+        #include "GasSensor.h"
+        #include "LightSensor.h"
+
+        typedef struct _SensorData
         {
+            char clientId[20];
             DHT11_Data dht11;
             ColorData color;
             int flame;
@@ -37,5 +60,5 @@
     #endif
 
     // 센서 실행
-    void runSensors(void);
+    SensorData runSensors(void);
 #endif

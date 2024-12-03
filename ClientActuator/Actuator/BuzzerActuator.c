@@ -18,8 +18,6 @@ int InitBuzzer(void) {
     return 0;
 }
 
-int ControlBuzzer(BUZZERSTATE state) {
+void ControlBuzzer(int state) {
     digitalWrite(BUZZER, state);
-
-    return 0;
 }

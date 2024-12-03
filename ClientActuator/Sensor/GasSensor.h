@@ -5,6 +5,6 @@
 int InitGasSensor(void);
 
 // 가스 센서 값 읽는 함수
-int ReadGasSensor(char channel);
+int ReadGasSensor();
 
 #endif

@@ -4,7 +4,6 @@
 
 #include "Sensors.h"
 #include "DebugUtil.h"
-#include "SensorLog.h"
 
 #if TEST
     int getRandomRange(int min, int max) {
@@ -30,7 +29,8 @@
     {
         if (InitColorSensor() == -1)
         {
-            printf("컬러 센서 초기화 실패\n") return -1;
+            printf("컬러 센서 초기화 실패\n");
+            return -1;
         }
 
         if (InitDht11Sensor() == -1)
@@ -67,10 +67,10 @@
 
         // 컬러 센서 읽기
         ReadColorSensor(&colorData);
-        data.color = colorData;
+        sensorData.color = colorData;
 
         // DHT11 센서 읽기
-        data.dht11 = ReadDht11Sensor();
+        sensorData.dht11 = ReadDht11Sensor();
 
         // 화재 센서 읽기
         sensorData.flame = ReadFlameSensor();
@@ -85,66 +85,60 @@
     }
 #endif
 
-void runSensors(void)
+SensorData runSensors(void)
 {
     const char* CLIENT_ID = "SENSOR01";  // 클라이언트 ID 설정
+    SensorData sensorData;
     
     #if TEST
         // TODO : 테스트를 위한 코드
         srand(time(NULL));
+        
+        float temp = getRandomRangeFloat(-10, 40);
+        float humidity = getRandomRangeFloat(0, 95);
+        int colorRed = getRandomRange(0, 255);
+        int colorGreen = getRandomRange(0, 255);
+        int colorBlue = getRandomRange(0, 255);
+        int light = getRandomRange(0, 10000);
+        int flame = getRandomRange(0, 1000);
+        int gas = getRandomRange(0, 100000);
 
-        for (int i = 0; i < 100; i++) {
-            float temp = getRandomRangeFloat(-10, 40);
-            float humidity = getRandomRangeFloat(0, 95);
-            int colorRed = getRandomRange(0, 255);
-            int colorGreen = getRandomRange(0, 255);
-            int colorBlue = getRandomRange(0, 255);
-            int light = getRandomRange(0, 10000);
-            int flame = getRandomRange(0, 1000);
-            int gas = getRandomRange(0, 100000);
+        char colorStr[16];
+        ColorToString(colorRed, colorGreen, colorBlue, colorStr);
 
-            char colorStr[16];
-            ColorToString(colorRed, colorGreen, colorBlue, colorStr);
+        sensorData.clientId = CLIENT_ID;
+        sensorData.dht11.temperature = temp;
+        sensorData.dht11.humidity = humidity;
+        sensorData.color.red = colorRed;
+        sensorData.color.green = colorGreen;
+        sensorData.color.blue = colorBlue;
+        sensorData.light = light;
+        sensorData.flame = flame;
+        sensorData.gas = gas;
 
-            // 로그파일에 기록
-            WriteLog(CLIENT_ID,
-                    temp,
-                    humidity,
-                    colorStr,
-                    light,
-                    flame,
-                    gas);
-        }
+        return sensorData;
     #else
         if (InitSensors() == -1)
         {
             printf("센서 초기화 실패\n");
-            return -1;
+            return sensorData;
         }
 
         while (1)
         {
             SensorData sensorData = ReadSensors();
             char colorStr[16];
-            ColorToString(sensorData.color, colorStr);
+            ColorToString(&sensorData, colorStr);
 
-            printf("온도: %.1f°C\n", sensorData.dht11.temperature);
-            printf("습도: %.1f%\n", sensorData.dht11.humidity);
-            printf("색상: %s\n", colorStr);
-            printf("조도: %d\n", sensorData.light);
-            printf("화재: %d\n", sensorData.flame);
-            printf("가스: %d\n", sensorData.gas);
+            printf("클라이언트 ID: %s\n", sensorData.clientId);
+            printf("현재 온도: %.1f°C\n", sensorData.dht11.temperature);
+            printf("현재 습도: %.1f%%\n", sensorData.dht11.humidity);
+            printf("현재 색상: %s\n", colorStr);
+            printf("현재 조도: %d\n", sensorData.light);
+            printf("현재 화재 감지: %d\n", sensorData.flame);
+            printf("현재 가스 농도: %d\n", sensorData.gas);
 
-            // 로그파일에 기록
-            WriteLog(CLIENT_ID,
-                    sensorData.dht11.temperature,
-                    sensorData.dht11.humidity,
-                    colorStr,
-                    sensorData.light,
-                    sensorData.flame,
-                    sensorData.gas);
-
-            sleep(1);
+            return sensorData;
         }
     #endif
 }
