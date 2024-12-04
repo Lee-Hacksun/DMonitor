@@ -30,6 +30,7 @@ typedef struct _TotalData
 
 TotalData* InitTotalData();
 int GetColorDistance(Color targetColor, Color nowCOlor);
+void UpdateProgress(char* clientID, int progress);
 void ProcessDataLog(char* clientID, TotalData* totalData);
 
 void SetupControlCode(unsigned char code);
@@ -40,7 +41,6 @@ SensorData* ReadSensorData(int clientSocket);
 Color GetRegisteredColor(char* clientID);
 
 void* DMonitorThreadAction(void* arg);
-void InitDMonitorThread();
 void DMonitorThreadCreate(int clientSocket);
 
 #endif

@@ -1,4 +1,3 @@
-#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +12,8 @@
 #include "ClientManager.h"
 #include "DebugUtil.h"
 #include "DMonitorThread.h"
+#include "FileManager.h"
+#include "FileLock.h"
 #include "RWLock.h"
 #include "ServerLauncher.h"
 
@@ -28,8 +29,6 @@ char g_colorClientID[BUFFER_SIZE] = "";
 RWLock g_control_code_rwlock;
 unsigned char g_control_code = 0;
 
-char EXEPath[PATH_MAX];
-
 #pragma endregion
 
 void SetupColor(char* clientID, Color color)
@@ -39,33 +38,6 @@ void SetupColor(char* clientID, Color color)
     g_color.Red = color.Red;
     g_color.Green = color.Green;
     g_color.Blue = color.Blue;
-}
-
-void SetEXEPath()
-{
-    ssize_t len = readlink("/proc/self/exe", EXEPath, sizeof(EXEPath));
-
-    if (len != -1)
-    {
-        EXEPath[len] = '\0';
-        strcpy(EXEPath,dirname(EXEPath));
-        printf("Setup EXEPath : %s\n", EXEPath);
-    }
-    else
-    {
-        perror("readlink");
-    }
-}
-
-char* GetLogDirPath()
-{
-    char* logPath = malloc(sizeof(char) * PATH_MAX);
-
-    ASSERT(strlen(EXEPath) + strlen(LOG_DIR_PATH) < PATH_MAX, "경로의 길이가 너무 깁니다.\n");
-    strcpy(logPath, EXEPath);
-    strcat(logPath, LOG_DIR_PATH);
-
-    return logPath;
 }
 
 void CheckWorkingDirectory()
@@ -100,6 +72,7 @@ void CheckClientListFile()
     char* path = GetLogDirPath();
     strcat(path, CLIENT_LIST_PATH);
 
+    pthread_mutex_lock(&g_client_list_lock);
     FILE* clientList = fopen(path, "r");
 
     if (clientList == NULL)
@@ -112,23 +85,79 @@ void CheckClientListFile()
         }
 
         // TODO : 초기값 설정
-        fprintf(clientList, "clientID,Species,Red,Green,Blue\n");
+        fprintf(clientList, "clientID,Species,Red,Green,Blue,RegionCode\n");
     }
 
     fclose(clientList);
+    pthread_mutex_unlock(&g_client_list_lock);
+
+    free(path);
+}
+
+void CheckSensorFile()
+{
+    char* path = GetLogDirPath();
+    strcat(path, SENSOR_PATH);
+
+    pthread_mutex_lock(&g_sensor_lock);
+    FILE* sensor = fopen(path, "r");
+
+    if (sensor == NULL)
+    {
+        printf("%s 파일이 없습니다. 센서 파일을 생성합니다.\n", path);
+        sensor = fopen(path, "w");
+        if (sensor == NULL)
+        {
+            perror("fopen");
+        }
+
+        fprintf(sensor, SENSOR_CSV_HEADER);
+    }
+
+    fclose(sensor);
+    pthread_mutex_unlock(&g_client_list_lock);
+
+    free(path);
+}
+
+void CheckProgressFile()
+{
+    char* path = GetLogDirPath();
+    strcat(path, PROGRESS_LIST_PATH);
+
+    pthread_mutex_lock(&g_progress_lock);
+    FILE* progress = fopen(path, "r");
+
+    if (progress == NULL)
+    {
+        printf("%s 파일이 없습니다. 프로그레스 파일을 생성합니다.\n", path);
+        progress = fopen(path, "w");
+        if (progress == NULL)
+        {
+            perror("fopen");
+        }
+
+        fprintf(progress, PROGRESS_LIST_CSV_HEADER);
+    }
+
+    fclose(progress);
+    pthread_mutex_unlock(&g_progress_lock);
+
     free(path);
 }
 
 void RunClientManager(int inputPipe)
 {  
     int serverSocket = LaunchServer();
+    int clientSocket = AcceptClient(serverSocket);
 
     InitRWLock(&g_color_rwlock);
-    InitRWLock(&g_control_code_rwlock); 
+    InitRWLock(&g_control_code_rwlock);
 
-    SetEXEPath();
     CheckWorkingDirectory();
     CheckClientListFile();
+    CheckSensorFile();
+    CheckProgressFile();
 
     char buffer[BUFFER_SIZE];
     ssize_t readSize;
@@ -162,27 +191,24 @@ void RunClientManager(int inputPipe)
                     {
                         perror("read Error!");
                         continue;
+                    }                        
+                    buffer[readSize] = '\0';
+
+                    cJSON* json = cJSON_Parse(buffer);
+                    if (json == NULL)
+                    {
+                        ASSERT(0, "Failed to parse json");
+                        continue;
                     }
 
-                    if (readSize > 1)
+                    cJSON* cilentNameJson = cJSON_GetObjectItem(json, "clientID");
+
+                    // color setting
+                    if (cilentNameJson != NULL)
                     {
                         Color color;
-                        
-                        buffer[readSize] = '\0';
 
-                        cJSON* json = cJSON_Parse(buffer);
-                        if (json == NULL)
-                        {
-                            ASSERT(0, "Failed to parse json");
-                            continue;
-                        }
-
-                        char* clientName = cJSON_GetObjectItem(json, "clientID")->valuestring;
-                        if (clientName == NULL)
-                        {
-                            ASSERT(0, "Failed to parse json");
-                            continue;
-                        }
+                        char* clientName = cilentNameJson->valuestring;
 
                         cJSON* jsonColor = cJSON_GetObjectItem(json, "color");
                         if (jsonColor == NULL)
@@ -198,13 +224,39 @@ void RunClientManager(int inputPipe)
                         WriteLock(&g_color_rwlock);
                         SetupColor(clientName, color);
                         WriteUnLock(&g_color_rwlock);
+
+                        cJSON_Delete(json);
                     }
+                    else // controlCode setting
+                    {
+                        int controlCode = cJSON_GetObjectItem(json, "BuzzerOff")->valueint;
+
+                        if (controlCode == 1)
+                        {
+                            WriteLock(&g_control_code_rwlock);
+                            g_control_code &= (LED_RED | LED_GREEN | LED_BLUE);
+                            WriteUnLock(&g_control_code_rwlock);
+                        }
+
+                        cJSON_Delete(json);
+                    }
+                    cJSON_Delete(cilentNameJson);                    
                 }
             }
         }
+        // TODO : 테스트
+        cJSON* json = cJSON_CreateObject();
 
-        // 제어코드 보내는 코드
+        ReadLock(&g_control_code_rwlock);
+        cJSON_AddNumberToObject(json, "ControlCode", g_control_code);
+        ReadUnlock(&g_control_code_rwlock);
+
+        char* jsonString = cJSON_Print(json);
+        write(clientSocket, jsonString, strlen(jsonString));
+        cJSON_Delete(json);
     }
     DestroyEventPolling(&eventPolling);
+    DestroyRWLock(&g_color_rwlock);
+    DestroyRWLock(&g_control_code_rwlock);
     close(serverSocket);
 }

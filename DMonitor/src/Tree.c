@@ -2,6 +2,7 @@
 #include <ncurses.h>
 
 #include "DebugUtil.h"
+#include "GUIManager.h"
 #include "TabPanel.h"
 #include "Tree.h"
 
@@ -30,7 +31,7 @@ Panel* GetTree(WINDOW* window)
     return treePanel;
 }
 
-void DrawTree( WINDOW* window, Panel* panel, int colorPairLeaf, int colorPairWood)
+void DrawTree( WINDOW* window, Panel* panel, int colorPairLeaf)
 {
     wclear(window);
     box(window, 0, 0);
@@ -50,18 +51,18 @@ void DrawTree( WINDOW* window, Panel* panel, int colorPairLeaf, int colorPairWoo
         }
         else if(tabIndex >= 7 && 13 > tabIndex)
         {
-            wattron(window, COLOR_PAIR(colorPairWood));
+            wattron(window, COLOR_PAIR(COLOR_WOOD_BLACK));
         }
 
         mvwprintw(window, panel->startY + tabIndex, (panel->width - strlen(panel->panelMessage->informations[i])) / 2, "%s", panel->panelMessage->informations[i]);    
 
-        if (tabIndex > 0 && tabIndex < 13) 
+        if (tabIndex >= 0 && tabIndex < 7) 
         {
             wattroff(window, COLOR_PAIR(colorPairLeaf));
         }
         else if(tabIndex >= 7 && 13 > tabIndex)
         {
-            wattroff(window, COLOR_PAIR(colorPairWood));
+            wattroff(window, COLOR_PAIR(COLOR_WOOD_BLACK));
         }
     }
 
