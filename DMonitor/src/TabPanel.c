@@ -113,8 +113,6 @@ void DecreasePanelSelect(Panel* panel)
 void DrawPanel( WINDOW* window, Panel* panel, int AlignOption)
 {
     wclear(window);
-    box(window, 0, 0);
-
     for (int i = panel->offset; (i < panel->panelMessage->size + panel->offset) && (i < panel->panelMessage->size); i++)
     {  
         int tabIndex = i - panel->offset;
@@ -153,7 +151,8 @@ void DrawPanel( WINDOW* window, Panel* panel, int AlignOption)
             wattroff(window, A_REVERSE);
         }
     }
-
+    
+    box(window, 0, 0);
     wrefresh(window);
 }
 

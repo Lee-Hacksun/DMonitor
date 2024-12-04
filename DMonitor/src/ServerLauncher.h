@@ -24,5 +24,6 @@ void DestroyEventPolling(EventPolling* eventPolling);
 
 int LaunchServer();
 void AcceptMultiClient(int serverSocket);
+int AcceptClient(int serverSocket);
 
 #endif

@@ -12,6 +12,8 @@
 #include "ClientManager.h"
 #include "DebugUtil.h"
 #include "DMonitorThread.h"
+#include "FileManager.h"
+#include "FileLock.h"
 #include "SensorData.h"
 
 TotalData* InitTotalData()
@@ -28,6 +30,49 @@ int GetColorDistance(Color tarGetColor, Color nowColor)
     double maxDistance = 255 * sqrt(3);
     double percentage = 100.0f - (distance / maxDistance) * 100.0f;
     return (int)percentage;
+}
+
+// TODO : 테스트 해야댐 
+void UpdateProgress(char* clientID, int progress)
+{   
+    char* path = GetLogDirPath();
+    strcat(path, PROGRESS_LIST_PATH);
+
+    pthread_mutex_lock(&g_progress_lock);
+    FILE* progressFile = fopen(path, "r");
+    if (progressFile == NULL)
+    {
+        perror("fopen");
+        return;
+    }
+
+    CSV* csv = ParseCSV(progressFile); 
+    fclose(progressFile);
+    pthread_mutex_unlock(&g_progress_lock);
+
+    for (int i = 0; i < csv->csvSize; i++)
+    {
+        if (strcmp(csv->data[i][PROGRESS_LIST_CSV_CLIENT_ID], clientID))
+        {
+            free(csv->data[i][PROGRESS_LIST_CSV_PROGRESS]);
+            csv->data[i][PROGRESS_LIST_CSV_PROGRESS] = malloc(sizeof(char) * 3);
+            sprintf(csv->data[i][PROGRESS_LIST_CSV_PROGRESS], "%d", progress);
+        }
+    } 
+
+    pthread_mutex_lock(&g_progress_lock);
+    progressFile = fopen(path, "w");
+    if (progressFile == NULL)
+    {
+        perror("fopen");
+        return;
+    }
+
+    CSVWrite(progressFile, csv, PROGRESS_LIST_CSV_HEADER);
+    fclose(progressFile);
+    pthread_mutex_unlock(&g_progress_lock);
+
+    free(path);
 }
 
 // TODO : 테스트 필요
@@ -58,15 +103,10 @@ void ProcessDataLog(char* clientID, TotalData* totalData)
     avgSensorData.color.Green /= totalData->count;
     avgSensorData.color.Blue /= totalData->count;
 
-    char path[PATH_MAX];
-    int pathSize =  strlen(EXEPath) + strlen(LOG_DIR_PATH) + strlen(clientID);
-    int writtenSize = snprintf(path, sizeof(path), "%s%s/%s.log", EXEPath, LOG_DIR_PATH, clientID);
-    if(writtenSize < 0 || writtenSize >= pathSize)
-    {
-        fprintf(stderr, "출력이 잘렸습니다.");
-        return;
-    }
+    char* path = GetLogDirPath();
+    strcat(path, SENSOR_PATH);
 
+    pthread_mutex_lock(&g_sensor_lock);
     FILE* sensorLog = fopen(path, "r");
     if (sensorLog == NULL)
     {
@@ -77,8 +117,10 @@ void ProcessDataLog(char* clientID, TotalData* totalData)
             perror("fopen");
             return;
         }
-        fprintf(sensorLog, "ClientID,flame,gas,humidity,light,temp,Red,Green,Blue,ColorDistance\n");
+        fprintf(sensorLog, "ClientID,flame,gas,humidity,light,temp,Red,Green,Blue,Progress\n");
     }
+
+    int progress = GetColorDistance(GetRegisteredColor(clientID), avgSensorData.color);
 
     fprintf(sensorLog, "%s,%d,%d,%d,%d,%d,%d,%d,%d,%d",
     clientID, 
@@ -90,26 +132,31 @@ void ProcessDataLog(char* clientID, TotalData* totalData)
     avgSensorData.color.Red, 
     avgSensorData.color.Green, 
     avgSensorData.color.Blue,
-    GetColorDistance(GetRegisteredColor(clientID), avgSensorData.color));
+    progress);
+
+    UpdateProgress(clientID, progress);
 
     fclose(sensorLog);
+    pthread_mutex_unlock(&g_sensor_lock);
+
+    free(path);
 }
 
-// TODO : 테스트 필요
 void SetupControlCode(unsigned char code)
 {
     int isChaged = 0;
+
     ReadLock(&g_control_code_rwlock);
     if (code & IS_SUPER_DO)
     {
         isChaged = 1;
     }
-    else if ((code & EMERGENCY) & (~(g_control_code & IS_SUPER_DO)))
+    else if ((code & EMERGENCY) && (g_control_code & IS_SUPER_DO) == 0)
     {
         isChaged = 1;
     }
-    else if ((code & IS_CHANGED) & ((g_control_code & (IS_SUPER_DO | EMERGENCY)) == 0))
-    {
+    else if ((code & IS_CHANGED) && ((g_control_code & (IS_SUPER_DO | EMERGENCY)) == 0))
+    { 
         isChaged = 1;
     }
     ReadUnlock(&g_control_code_rwlock);
@@ -117,7 +164,7 @@ void SetupControlCode(unsigned char code)
     if (isChaged)
     {
         WriteLock(&g_control_code_rwlock);
-        printf("g_control_code가 %d에서 %d로 바뀝니다.\n", g_control_code, code);
+        printf("g_control_code가 %d에서 %d으로 바뀝니다.\n", g_control_code, code);
         g_control_code = code;
         WriteUnLock(&g_control_code_rwlock);
     }
@@ -125,7 +172,7 @@ void SetupControlCode(unsigned char code)
 
 char* RegistClient(int clientSocket)
 {   
-    char* nowClientID = malloc(sizeof(char) * CLIENT_NAME_SIZE);
+    char* nowClientID = malloc(sizeof(char) * CLIENT_ID_SIZE);
     char buffer[BUFFER_SIZE];
     ssize_t readSize;
 
@@ -141,6 +188,7 @@ char* RegistClient(int clientSocket)
     cJSON* json = cJSON_Parse(buffer);
     char* clientID = cJSON_GetObjectItem(json, "clientID")->valuestring;
     char* species = cJSON_GetObjectItem(json, "Species")->valuestring;
+    char* regionCode = cJSON_GetObjectItem(json, "RegionCode")->valuestring;
 
     Color color;
     cJSON* jsonColor = cJSON_GetObjectItem(json, "Color");
@@ -152,6 +200,7 @@ char* RegistClient(int clientSocket)
     char* path = GetLogDirPath();
     strcat(path, CLIENT_LIST_PATH);
 
+    pthread_mutex_lock(&g_client_list_lock);
     FILE* clientList = fopen(path, "a+");
     if (clientList == NULL)
     {
@@ -189,7 +238,7 @@ char* RegistClient(int clientSocket)
                 ASSERT(0, "올바르지 않은 종 이름");
             }
         }
-        fprintf(clientList, "%s,%s,%d,%d,%d\n", clientID, species, color.Red, color.Green, color.Blue);
+        fprintf(clientList, "%s,%s,%d,%d,%d,%s\n", clientID, species, color.Red, color.Green, color.Blue, regionCode);
         printf("클라이언트가 새로 등록되었습니다. : %s\n", clientID);
     }
     strcpy(nowClientID, clientID);
@@ -197,6 +246,8 @@ char* RegistClient(int clientSocket)
     cJSON_Delete(json);
     free(path);
     fclose(clientList);
+    pthread_mutex_unlock(&g_client_list_lock);
+
     return nowClientID;
 }
 
@@ -240,7 +291,6 @@ SensorData* ReadSensorData(int clientSocket)
     sensorData->color.Green = cJSON_GetObjectItem(jsonColor, "Green")->valueint;
     sensorData->color.Blue = cJSON_GetObjectItem(jsonColor, "Blue")->valueint;
 
-    printf("%d, %d\n", sensorData->light, sensorData->color.Green);
     return sensorData;
 }
 
@@ -250,6 +300,8 @@ Color GetRegisteredColor(char* clientID)
 
     char* path = GetLogDirPath();
     strcat(path, CLIENT_LIST_PATH);
+
+    pthread_mutex_lock(&g_client_list_lock);
     FILE* clientList = fopen(path, "r");
     if (clientList == NULL)
     {
@@ -257,21 +309,22 @@ Color GetRegisteredColor(char* clientID)
         return color;
     }
 
-    CSV* registeredData = ParseCSV(clientList);
+    int index = CLIENT_LIST_CSV_CLIENT_ID;
+    CSV* registeredData = ParseCSVOption(clientList, Select, &index, clientID);
     free(path);
     fclose(clientList);
+    pthread_mutex_unlock(&g_client_list_lock);
 
-    for (int i = 0; i < registeredData->csvSize; i++)
+    if (registeredData == NULL)
     {
-        printf("%s, %s\n", registeredData->data[i][CLIENT_LIST_CSV_CLIENT_ID], clientID);
-        if (strcmp(registeredData->data[i][CLIENT_LIST_CSV_CLIENT_ID], clientID) == 0)
-        {
-            color.Red = atoi(registeredData->data[i][CLIENT_LIST_CSV_COLOR_RED]);
-            color.Green = atoi(registeredData->data[i][CLIENT_LIST_CSV_COLOR_GREEN]);
-            color.Blue = atoi(registeredData->data[i][CLIENT_LIST_CSV_COLOR_BLUE]);
-        }
+        ASSERT(0, "등록되지 않은 클라이언트\n");
     }
-    ASSERT((color.Red | color.Green | color.Blue), "등록되지 않은 클라이언트\n");
+    else
+    {
+        color.Red = atoi(registeredData->data[0][CLIENT_LIST_CSV_COLOR_RED]);
+        color.Green = atoi(registeredData->data[0][CLIENT_LIST_CSV_COLOR_GREEN]);
+        color.Blue = atoi(registeredData->data[0][CLIENT_LIST_CSV_COLOR_BLUE]);
+    }
 
     DestroyCSV(registeredData);
     return color;
@@ -286,8 +339,8 @@ void* DMonitorThreadAction(void* arg)
     int isLEDSelected = 0;
     Color color = GetRegisteredColor(clientID);
     int colorDistance = -1;
-
-    unsigned char controlCode;
+    printf("1\n");
+    unsigned char controlCode = 0;
 
     time_t currentTime;
     struct tm localTime;
@@ -296,7 +349,6 @@ void* DMonitorThreadAction(void* arg)
     time(&currentTime);
     localtime_r(&currentTime, &localTime);
     currentDay = localTime.tm_mday;
-
     while(1)
     {
         time(&currentTime);
@@ -314,8 +366,7 @@ void* DMonitorThreadAction(void* arg)
         }
         totalData->sensorData[totalData->count++] = sensorData;
 
-        //   TODO : 실제로 불이 나는 조건으로 변경
-        if (!(sensorData->flame && sensorData->gas))
+        if (!(sensorData->flame == 1))
         {
             controlCode |= EMERGENCY | IS_CHANGED | BUZZER;
         }
@@ -339,7 +390,7 @@ void* DMonitorThreadAction(void* arg)
         {   
             int processLEDPercentage = 0;
             ReadLock(&g_color_rwlock);
-            if ((g_color.Red == 0) | (g_color.Green == 0) | (g_color.Blue == 0))
+            if ((g_color.Red != 0) | (g_color.Green != 0) | (g_color.Blue != 0))
             {
                 processLEDPercentage = GetColorDistance(g_color, sensorData->color);
             }
@@ -350,7 +401,6 @@ void* DMonitorThreadAction(void* arg)
             ReadUnlock(&g_color_rwlock);
             
             controlCode |= IS_CHANGED;
-            controlCode &= ~(LED_RED | LED_GREEN | LED_BLUE);
             if (processLEDPercentage > 0 && 20 > processLEDPercentage)
             {
                 controlCode |= LED_BLUE;
@@ -364,15 +414,14 @@ void* DMonitorThreadAction(void* arg)
                 controlCode |= LED_RED;
             }
         }
-
-        // TODO : 테스트 필요
+        
         SetupControlCode(controlCode);
-        controlCode = 0;
+        controlCode = 0;        
+
         sleep(1);
     }
     free(clientID);
     close(clientSocket);
-    exit(1);
 }
 
 void DMonitorThreadCreate(int clientSocket)

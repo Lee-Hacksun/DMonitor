@@ -6,6 +6,6 @@
 #include "TabPanel.h"
 
 Panel* GetTree(WINDOW* window);
-void DrawTree( WINDOW* window, Panel* panel, int colorPairLeaf, int colorPairWood);
+void DrawTree( WINDOW* window, Panel* panel, int colorPairLeaf);
 
 #endif

@@ -14,9 +14,11 @@ set(SOURCES
     DMonitorThread.c
     Tree.c
     Color.c
+    FileManager.c
     ../utils/RWLock.c
     ../utils/csv.c
     ../utils/cjson/cJSON.c
+    ../utils/map.c
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

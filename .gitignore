@@ -54,3 +54,5 @@ dkms.conf
 # CMake
 DMonitor/build/*
 !DMonitor/build/build.sh
+
+.vscode/
