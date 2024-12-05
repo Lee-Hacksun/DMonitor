@@ -20,7 +20,6 @@
         } ColorData;
 
         typedef struct {
-            char clientId[20];
             Dht11Data dht11;
             ColorData color;
             int light;
@@ -38,7 +37,6 @@
 
         typedef struct _SensorData
         {
-            char clientId[20];
             DHT11_Data dht11;
             ColorData color;
             int flame;
