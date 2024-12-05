@@ -14,17 +14,7 @@
         float scale = rand() / (float) RAND_MAX;
         return min + scale * (max - min);
     }
-
-    void ColorToString(int red, int green, int blue, char *colorString)
-    {
-        sprintf(colorString, "%d;%d;%d", red, green, blue);
-    }
 #else
-    void ColorToString(SensorData *sensorData, char *colorString)
-    {
-        sprintf(colorString, "%d;%d;%d", sensorData->color.red, sensorData->color.green, sensorData->color.blue);
-    }
-
     int InitSensors(void)
     {
         if (InitColorSensor() == -1)
@@ -65,6 +55,10 @@
         SensorData sensorData;
         ColorData colorData;
 
+        // 클라이언트 ID 설정
+        strncpy(sensorData.clientId, "SENSOR01", sizeof(sensorData.clientId) - 1);
+        sensorData.clientId[sizeof(sensorData.clientId) - 1] = '\0';
+
         // 컬러 센서 읽기
         ReadColorSensor(&colorData);
         sensorData.color = colorData;
@@ -73,7 +67,7 @@
         sensorData.dht11 = ReadDht11Sensor();
 
         // 화재 센서 읽기
-        sensorData.flame = ReadFlameSensor();
+        sensorData.flame = ReadFlameSensor() >= 40 ? 1 : 0;
 
         // 가스 센서 읽기
         sensorData.gas = ReadGasSensor();
@@ -87,7 +81,6 @@
 
 SensorData runSensors(void)
 {
-    const char* CLIENT_ID = "SENSOR01";  // 클라이언트 ID 설정
     SensorData sensorData;
     
     #if TEST
@@ -100,13 +93,13 @@ SensorData runSensors(void)
         int colorGreen = getRandomRange(0, 255);
         int colorBlue = getRandomRange(0, 255);
         int light = getRandomRange(0, 10000);
-        int flame = getRandomRange(0, 1000);
+        int flame = getRandomRange(0, 1);
         int gas = getRandomRange(0, 100000);
 
-        char colorStr[16];
-        ColorToString(colorRed, colorGreen, colorBlue, colorStr);
+        // 클라이언트 ID 설정
+        strncpy(sensorData.clientId, "SENSOR01", sizeof(sensorData.clientId) - 1);
+        sensorData.clientId[sizeof(sensorData.clientId) - 1] = '\0';
 
-        sensorData.clientId = CLIENT_ID;
         sensorData.dht11.temperature = temp;
         sensorData.dht11.humidity = humidity;
         sensorData.color.red = colorRed;
@@ -115,6 +108,14 @@ SensorData runSensors(void)
         sensorData.light = light;
         sensorData.flame = flame;
         sensorData.gas = gas;
+
+        printf("클라이언트 ID: %s\n", sensorData.clientId);
+        printf("현재 온도: %.1f°C\n", sensorData.dht11.temperature);
+        printf("현재 습도: %.1f%%\n", sensorData.dht11.humidity);
+        printf("현재 색상: %d;%d;%d\n", sensorData.color.red, sensorData.color.green, sensorData.color.blue);
+        printf("현재 조도: %d\n", sensorData.light);
+        printf("현재 화재 감지: %s\n", sensorData.flame ? "true" : "false");
+        printf("현재 가스 농도: %d\n", sensorData.gas);
 
         return sensorData;
     #else
@@ -127,15 +128,13 @@ SensorData runSensors(void)
         while (1)
         {
             SensorData sensorData = ReadSensors();
-            char colorStr[16];
-            ColorToString(&sensorData, colorStr);
 
             printf("클라이언트 ID: %s\n", sensorData.clientId);
             printf("현재 온도: %.1f°C\n", sensorData.dht11.temperature);
             printf("현재 습도: %.1f%%\n", sensorData.dht11.humidity);
-            printf("현재 색상: %s\n", colorStr);
+            printf("현재 색상: %d;%d;%d\n", sensorData.color.red, sensorData.color.green, sensorData.color.blue);
             printf("현재 조도: %d\n", sensorData.light);
-            printf("현재 화재 감지: %d\n", sensorData.flame);
+            printf("현재 화재 감지: %s\n", sensorData.flame ? "true" : "false");
             printf("현재 가스 농도: %d\n", sensorData.gas);
 
             return sensorData;

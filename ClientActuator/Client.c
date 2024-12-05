@@ -5,42 +5,20 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-
-#include "cjson/cJSON.h"
-#include "Actuator.h"
+#include <errno.h>
+#include <sys/select.h>
+#include <fcntl.h>
+#include <time.h>
 
 void error_handling(char *message);
 void process_code(unsigned char code);
+
 int main(int argc, char **argv)
 {
     int sock;
-    int str_len, i;
+    int str_len;
     struct sockaddr_in serv_addr;
-    /*
-        typedef struct{
-            char clientId[20];
-            DHT11_Data dht11;
-            ColorData color;
-            int flame;
-            int gas;
-            int light;
-        } SensorData;
-
-        typedef struct {
-            float temperature;
-            float humidity;
-        } DHT11_Data;
-
-        typedef struct {
-            int red;
-            int green;
-            int blue;
-        } ColorData;
-    */
-    char buf[100];
-    char msg1[] = "Hello Everybody";
-    char msg2[] = "This is test program";
-    char message[10];
+    unsigned char last_code = 0; // 마지막으로 받은 코드
 
     if (argc != 3) {
         printf("Usage : %s <IP> <port>\n", argv[0]);
@@ -50,27 +28,29 @@ int main(int argc, char **argv)
     sock = socket(PF_INET, SOCK_STREAM, 0);
     if (sock == -1)
         error_handling("socket() error");
+    
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
     serv_addr.sin_port = htons(atoi(argv[2]));
 
     if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == -1)
-        error_handling("connect() error");
+        error_handling("connect() error");    
 
-    
-    while (1) {
+     while (1) {
         unsigned char code;
         str_len = read(sock, &code, sizeof(code));
-        if (str_len == -1)
-            error_handling("read() error");
+        if (str_len == 0) {
+            printf("Connection to server lost.\n");
+            break;
+        }
+
         printf("Received code: %u\n", code);
 
-        // 수신한 코드 처리
         process_code(code);
     }
 
-    // 소켓 종료
+    RunActuator(0, 0, 0, 0);
     close(sock);
     return 0;
 }

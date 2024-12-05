@@ -14,33 +14,7 @@ void error_handling(char *message);
 int main(int argc, char **argv)
 {
     int sock;
-    int str_len, i;
     struct sockaddr_in serv_addr;
-    /*
-        typedef struct{
-            char clientId[20];
-            DHT11_Data dht11;
-            ColorData color;
-            int flame;
-            int gas;
-            int light;
-        } SensorData;
-
-        typedef struct {
-            float temperature;
-            float humidity;
-        } DHT11_Data;
-
-        typedef struct {
-            int red;
-            int green;
-            int blue;
-        } ColorData;
-    */
-    char buf[100];
-    char msg1[] = "Hello Everybody";
-    char msg2[] = "This is test program";
-    char message[10];
 
     if (argc != 3) {
         printf("Usage : %s <IP> <port>\n", argv[0]);
@@ -88,9 +62,12 @@ int main(int argc, char **argv)
 
         char* jsonString = cJSON_Print(json);
         printf("jsonString: %s\n", jsonString);
-        send(sock, jsonString, strlen(jsonString), 0);
+        int sendResult = send(sock, jsonString, strlen(jsonString), 0);
+        if (sendResult == -1) {
+            error_handling("send() error");
+            break; // 서버와의 연결이 끊겼을 경우 루프를 종료
+        }
 
-        // free(json);
         cJSON_Delete(json);
         sleep(5); // 5초마다 반복
     }

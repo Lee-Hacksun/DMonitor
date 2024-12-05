@@ -56,14 +56,11 @@ DHT11_Data ReadDht11Sensor(void) {
     // 읽어온 데이터에대한 중복 검사를 진행 한다.  
   	if((j>=40)&&(dht11_val[4]==((dht11_val[0]+dht11_val[1]+dht11_val[2]+dht11_val[3])& 0xFF))){  
     		farenheit=dht11_val[2]*9./5.+32;  
-    		printf("Humidity = %d.%d %% Temperature = %d.%d *C (%.1f *F)\n",dht11_val[0],dht11_val[1],dht11_val[2],dht11_val[3],farenheit);  
 			//정상적인 dht11 데이터를 temp 배열에 저장한다.
 			for(int i=0; i<5; i++)
 				dht11_temp[i] = dht11_val[i];
 			farenheit_temp = farenheit;
-  	}else {
-    		printf("Humidity = %d.%d %% Temperature = %d.%d *C (%.1f *F)\n",dht11_temp[0],dht11_temp[1],dht11_temp[2],dht11_temp[3],farenheit_temp); 
-	}
+  	}
 
     data.humidity = dht11_temp[0] + dht11_temp[1] / 10.0;
     data.temperature = dht11_temp[2] + dht11_temp[3] / 10.0;

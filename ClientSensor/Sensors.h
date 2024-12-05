@@ -2,9 +2,6 @@
 #define SENSORS_H
 
     #if TEST
-        // 색상 문자열 생성
-        void ColorToString(int red, int green, int blue, char *colorString);
-
         // 정수 난수 생성
         int getRandomRange(int min, int max);
 
@@ -23,7 +20,7 @@
         } ColorData;
 
         typedef struct {
-            const char* clientId;
+            char clientId[20];
             Dht11Data dht11;
             ColorData color;
             int light;
@@ -48,9 +45,6 @@
             int gas;
             int light;
         } SensorData;
-
-        // 색상 문자열 생성
-        void ColorToString(SensorData *sensorData, char *colorString);
 
         // 센서 초기화
         int InitSensors(void);
