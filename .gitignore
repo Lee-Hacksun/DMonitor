@@ -54,5 +54,9 @@ dkms.conf
 # CMake
 DMonitor/build/*
 !DMonitor/build/build.sh
+!DMonitor/build/testData.sh
+
+#TestDir
+DMonitor/testData
 
 .vscode/
