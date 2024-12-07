@@ -1,7 +1,7 @@
 #ifndef MAP_H
 #define MAP_H
 
-#define TABLE_SIZE 128
+#define TABLE_SIZE 512
 
 typedef struct _Entry {
     char* key;

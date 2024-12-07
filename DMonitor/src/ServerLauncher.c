@@ -8,6 +8,7 @@
 
 #include "DMonitorThread.h"
 #include "ServerLauncher.h"
+#include "logger.h"
 
 void InitServerSocket(int* serverSocket, struct sockaddr_in* serverAddress)
 {
@@ -54,7 +55,8 @@ int LaunchServer()
 	{
         // TODO : 에러 핸들링 추가
     }
-
+    
+    LogPrintf("서버 소캣을 생성했습니다.\n");
     return serverSocket;
 }
 
@@ -79,11 +81,13 @@ int AcceptClient(int serverSocket)
     struct sockaddr_in clientAddress;
 
     int clientAddressSize = sizeof(clientAddress);
+    LogPrintf("엑츄레이터 클라이언트의 연결 요청을 대기중입니다.\n");
     if((clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientAddressSize)) < 0)
     {
         // TODO : 에러 핸들링 추가 
         exit(EXIT_FAILURE);
     }
 
+    LogPrintf("엑츄레이터 클라이언트(%d)와의 연결에 성공했습니다.\n", clientSocket);
     return clientSocket;
 }

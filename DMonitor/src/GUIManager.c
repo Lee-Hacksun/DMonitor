@@ -35,7 +35,63 @@ char* help[HELP_MESSAGE_SIZE] =
     "C : color assignment"
 };
 
-// TODO : 뮤택스 추가 
+char* title[TITLE_MESSAGE_SIZE] = {
+    " ____        __  __             _ _             ",
+    "|  _ \\      |  \\/  | ___  _ __ (_) |_ ___  _ __ ",
+    "| | | |_____| |\\/| |/ _ \\| '_ \\| | __/ _ \\| '__|",
+    "| |_| |_____| |  | | (_) | | | | | || (_) | |   ",
+    "|____/      |_|  |_|\\___/|_| |_|_|\\__\\___/|_|   ",
+    "",
+    "",
+    "If the actuator client is connected, press any key to continue"
+};
+
+void Merge(ClientInfos* array, int left, int mid, int right, int ascending) 
+{
+    int i, j, k;
+    int n1 = mid - left + 1;
+    int n2 = right - mid;
+
+    ClientInfos* leftArr = malloc(n1 * sizeof(ClientInfos));
+    ClientInfos* rightArr = malloc(n2 * sizeof(ClientInfos));
+
+    for (i = 0; i < n1; i++) leftArr[i] = array[left + i];
+    for (j = 0; j < n2; j++) rightArr[j] = array[mid + 1 + j];
+
+    i = 0; j = 0; k = left;
+
+    while (i < n1 && j < n2) {
+        if ((ascending && leftArr[i].progress <= rightArr[j].progress) ||
+            (!ascending && leftArr[i].progress > rightArr[j].progress)) {
+            array[k++] = leftArr[i++];
+        } else {
+            array[k++] = rightArr[j++];
+        }
+    }
+
+    while (i < n1) array[k++] = leftArr[i++];
+    while (j < n2) array[k++] = rightArr[j++];
+
+    free(leftArr);
+    free(rightArr);
+}
+
+void MergeSort(ClientInfos* array, int left, int right, int ascending) 
+{
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+        MergeSort(array, left, mid, ascending);
+        MergeSort(array, mid + 1, right, ascending);
+        Merge(array, left, mid, right, ascending);
+    }
+}
+
+void SortClientInfos(ClientInfos* infos, int ascending) 
+{
+    if (infos == NULL || infos->size <= 1) return;
+    MergeSort(infos, 0, infos->size - 1, ascending);
+}
+
 ClientInfos* GetClientInfos(ClientInfos* clientInfos, int* clientInfosSize)
 {
     if (clientInfos != NULL)
@@ -46,7 +102,6 @@ ClientInfos* GetClientInfos(ClientInfos* clientInfos, int* clientInfosSize)
     char* path = GetLogDirPath();
     strcat(path, CLIENT_LIST_PATH);
 
-    pthread_mutex_lock(&g_client_list_lock);
     FILE* csvFile = fopen(path, "r");
     if (csvFile == NULL)
     {
@@ -55,10 +110,9 @@ ClientInfos* GetClientInfos(ClientInfos* clientInfos, int* clientInfosSize)
     }
 
     int index = CLIENT_LIST_CSV_CLIENT_ID;
-    CSV* csv = ParseCSVOption(csvFile, Distinct, &index, NULL);
+    CSV* csv = ParseCSVOption(csvFile, Distinct, &index, NULL, NULL, NULL);
     free(path);
     fclose(csvFile);
-    pthread_mutex_unlock(&g_client_list_lock);
 
     clientInfos = malloc(sizeof(ClientInfos) * csv->csvSize);
     for (int i = 0; i < csv->csvSize; i++)
@@ -73,7 +127,6 @@ ClientInfos* GetClientInfos(ClientInfos* clientInfos, int* clientInfosSize)
     path = GetLogDirPath();
     strcat(path, PROGRESS_LIST_PATH);
 
-    pthread_mutex_lock(&g_progress_lock);
     csvFile = fopen(path, "r");
     if (csvFile == NULL)
     {
@@ -81,16 +134,18 @@ ClientInfos* GetClientInfos(ClientInfos* clientInfos, int* clientInfosSize)
         return NULL;
     }
 
-    index = PROGRESS_LIST_CSV_PROGRESS;
-    csv = ParseCSVOption(csvFile, Distinct, &index, NULL);
+    index = PROGRESS_LIST_CSV_CLIENT_ID;
+    csv = ParseCSVOption(csvFile, Distinct, &index, NULL, NULL, NULL);
     free(path);
     fclose(csvFile); 
-    pthread_mutex_unlock(&g_progress_lock);
 
     for (int i = 0; i < csv->csvSize; i++)
     {
         clientInfos[i].progress = atoi(csv->data[i][PROGRESS_LIST_CSV_PROGRESS]);
     }
+    clientInfos->size = csv->csvSize;
+    SortClientInfos(clientInfos, DESCENDING);
+    DestroyCSV(csv);
 
     return clientInfos;
 }
@@ -152,7 +207,6 @@ void GetDetailPanel(WINDOW* win, char* clientID)
     char* path = GetLogDirPath();
     strcat(path, SENSOR_PATH);
 
-    pthread_mutex_lock(&g_sensor_lock);
     FILE* csvFile = fopen(path, "r");
     if (csvFile == NULL)
     {
@@ -161,10 +215,9 @@ void GetDetailPanel(WINDOW* win, char* clientID)
     }
 
     int index = SENSOR_CSV_CLIENT_ID;
-    CSV* csv = ParseCSVOption(csvFile, Select, &index, clientID);
+    CSV* csv = ParseCSVOption(csvFile, Select, &index, clientID, NULL, NULL);
     free(path);
     fclose(csvFile);    
-    pthread_mutex_unlock(&g_sensor_lock);
 
     clientDetailInfos = malloc(sizeof(ClientDetailInfos) * csv->csvSize);
     for (int i = 0; i < csv->csvSize; i++)
@@ -186,12 +239,12 @@ void GetDetailPanel(WINDOW* win, char* clientID)
     // 문자열 만들기 
     clientDetailInfosString = malloc(sizeof(char*) * clientDetailInfosSize + 1);
     clientDetailInfosString[0] = malloc(sizeof(char) * COLS - MARGIN_LEFT * 2);
-    sprintf(clientDetailInfosString[0], "%-10s %-10s %-10s %-10s %-15s %-10s %-10s %-10s %-10s\n", "Gas", "Flame", "Humidity", "Light", "Temperature", "Red", "Green", "Blue", "Progress");
+    sprintf(clientDetailInfosString[0], "%-10s %-10s %-10s %-10s %-15s %-10s %-10s %-10s %-10s\n", "Flame", "Gas", "Humidity", "Light", "Temperature", "Red", "Green", "Blue", "Progress");
 
     for(int i = 1; i < clientDetailInfosSize + 1; i++)
     {
         clientDetailInfosString[i] = malloc(sizeof(char) * COLS - MARGIN_LEFT * 2);
-        sprintf(clientDetailInfosString[i], "%-10f %-10f %-10f %-10f %-15f %-10d %-10d %-10d %d%%\n", clientDetailInfos[i - 1].gas, clientDetailInfos[i - 1].flame, clientDetailInfos[i - 1].humidity, clientDetailInfos[i - 1].light, clientDetailInfos[i - 1].temp, clientDetailInfos[i - 1].colorRed, clientDetailInfos[i - 1].colorGreen, clientDetailInfos[i - 1].colorBlue, clientDetailInfos[i - 1].progress);
+        sprintf(clientDetailInfosString[i], "%-10d %-10d %-10.2f %-10d %-15.2f %-10d %-10d %-10d %d%%\n", clientDetailInfos[i - 1].flame, clientDetailInfos[i - 1].gas, clientDetailInfos[i - 1].humidity, clientDetailInfos[i - 1].light, clientDetailInfos[i - 1].temp, clientDetailInfos[i - 1].colorRed, clientDetailInfos[i - 1].colorGreen, clientDetailInfos[i - 1].colorBlue, clientDetailInfos[i - 1].progress);
     }
 
     clientDetailPanelMessage = NewPanelMessage(clientDetailInfosString, clientDetailInfosSize + 1);
@@ -235,7 +288,6 @@ void SendColor(int fd, char* clientID, Color color)
 
     ssize_t a = write(fd, jsonString, strlen(jsonString));
 
-    free(jsonString);
     cJSON_Delete(json);
 }
 
@@ -247,7 +299,6 @@ void TurnOffBuzzer(int fd)
     char* jsonString = cJSON_Print(json);
     ssize_t a = write(fd, jsonString, strlen(jsonString));
 
-    free(jsonString);
     cJSON_Delete(json);
 
     mvwprintw(stdscr, LINES - 1, 0, "Shut down the buzzer. Press any key to continue");
@@ -406,6 +457,10 @@ int HandleKeyboardInput(Panel* panel, int* selectedTab)
             }
             break;
 
+        case 'R':
+        case 'r':
+            return DISPLAY_REFRESh_OVERVEIW;
+
         default:
             return DISPLAY_CURRENT;
     }
@@ -452,6 +507,11 @@ int DisplayHelp(WINDOW* window, Panel* panel)
 
 int DisplayColorSetting(WINDOW* window, char* clientID, int fd)
 {
+    if (strcmp(clientID, "") == 0)
+    {
+        return DISPLAY_DETAILS;
+    }
+
     int input = -1;
     Color color;
     DrawBorder(window);
@@ -485,7 +545,7 @@ void RunGUIManager(int inputPipe)
     DrawTitle();
 
     int clientInfosSize = 0;
-    ClientInfos* clientInfos;
+    ClientInfos* clientInfos = NULL;
     clientInfos = GetClientInfos(clientInfos, &clientInfosSize);
 
     WINDOW* fullScreenWindow = newwin(LINES - MARGIN_TOP * 2, COLS - MARGIN_LEFT * 2, MARGIN_TOP, MARGIN_LEFT);
@@ -495,14 +555,21 @@ void RunGUIManager(int inputPipe)
 
     PanelMessage* overviewMessage = NewPanelMessage(ClientInfosToString(clientInfos, clientInfosSize), clientInfosSize + 1); // +1 is header 
     PanelMessage* helpMessage = NewPanelMessage(help, HELP_MESSAGE_SIZE);
+    PanelMessage* titleMessage = NewPanelMessage(title, TITLE_MESSAGE_SIZE);
 
     Panel* overviewPanel = wNewPanel(fullScreenWindow, MARGIN_TOP, MARGIN_LEFT, overviewMessage);
     Panel* helpPanel = wNewPanel(fullScreenWindow, MARGIN_TOP, MARGIN_LEFT, helpMessage);
+    Panel* titlePanel = wNewPanel(fullScreenWindow, (LINES - MARGIN_TOP * 2 - TITLE_MESSAGE_SIZE) / 2, MARGIN_LEFT, titleMessage);
+    titlePanel->selected = -1; // titlePanel just display title string;
 
-    char* clientID = "";
+    char clientID[MAX_CLIENT_ID_SIZE] = "";
     int selectedTab = 0;
     int displayStatus = DISPLAY_OVERVIEW;
     int displayNext;
+    int clientInfosOrder = DESCENDING;
+
+    DrawPanel(fullScreenWindow, titlePanel, CENTER);
+    getch();
 
     while(1)
     {
@@ -513,7 +580,11 @@ void RunGUIManager(int inputPipe)
             {
                 displayStatus = displayNext;
             }
-            clientID = clientInfos[overviewPanel->selected + overviewPanel->offset - 1].clientID; 
+
+            if ((overviewPanel->selected + overviewPanel->offset - 1) != 0)
+            {
+                strcpy(clientID,clientInfos[overviewPanel->selected + overviewPanel->offset - 1].clientID); 
+            }
             GetDetailPanel(leftLopsidedWindow, clientID);
             break;
 
@@ -544,6 +615,16 @@ void RunGUIManager(int inputPipe)
             displayStatus = DISPLAY_OVERVIEW;
             break;
 
+        case DISPLAY_REFRESh_OVERVEIW:
+            clientInfos = GetClientInfos(clientInfos, &clientInfosSize);
+            overviewMessage = NewPanelMessage(ClientInfosToString(clientInfos, clientInfosSize), clientInfosSize + 1); // +1 is header 
+            overviewPanel = wNewPanel(fullScreenWindow, MARGIN_TOP, MARGIN_LEFT, overviewMessage);
+            mvwprintw(stdscr, LINES - 1, 0, "Refresh data . Press any key to continue");
+            getch();
+            ClearScreen();
+            displayStatus = DISPLAY_OVERVIEW;
+            break;
+
         default:
             ASSERT(displayStatus && FALSE, "undefined displayStatus");
             displayStatus = DISPLAY_OVERVIEW;
@@ -551,6 +632,3 @@ void RunGUIManager(int inputPipe)
         }
     }
 }
-
-// TODO : 
-// 여러군데에서 접근하는 파일 뮤텍스 추가

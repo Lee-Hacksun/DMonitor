@@ -9,6 +9,7 @@
 #define PROGRAM_TITLE "D-MONITOR"
 
 #define HELP_MESSAGE_SIZE 10
+#define TITLE_MESSAGE_SIZE 8
 
 #define DISPLAY_CURRENT -1
 #define DISPLAY_OVERVIEW 1
@@ -16,6 +17,8 @@
 #define DISPLAY_HELP 3
 #define DISPLAY_COLOR_SETTING 4
 #define DISPLAY_TURNOFF_BUZZER 5
+#define DISPLAY_REFRESh_OVERVEIW 6
+#define CHANGE_CLIENTINFOS_ORDER 7
 
 #define COLOR_LEAF 1
 #define COLOR_WOOD 2
@@ -41,19 +44,23 @@
 #define MAX_REGION_CODE_SIZE 4
 #define MAX_SPECIES_SIZE 128
 
+#define ASCENDING 1
+#define DESCENDING 0
+
 typedef struct _ClientInfos
 {
     char clientID[MAX_CLIENT_ID_SIZE];
     char regionCode[MAX_REGION_CODE_SIZE];
     char species[MAX_SPECIES_SIZE];
     int progress; 
+    int size;
 } ClientInfos;
 
 typedef struct _ClientDetailInfos
 {
-    float gas;
-    float flame;
-    float light;
+    int gas;
+    int flame;
+    int light;
     float temp;
     float humidity;
     unsigned char colorRed;
@@ -61,6 +68,10 @@ typedef struct _ClientDetailInfos
     unsigned char colorBlue;
     int progress;
 } ClientDetailInfos;
+
+void Merge(ClientInfos* array, int left, int mid, int right, int ascending);
+void MergeSort(ClientInfos* array, int left, int right, int ascending);
+void SortClientInfos(ClientInfos* infos, int ascending);
 
 ClientInfos* GetClientInfos(ClientInfos* clientInfos, int* clientInfosSize);
 char** ClientInfosToString(ClientInfos* clientInfos, int size);

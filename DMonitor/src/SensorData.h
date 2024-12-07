@@ -7,8 +7,8 @@ typedef struct _SensorData
 {
     int gas;
     int flame;
-    int humidity;
-    int temp;
+    float humidity;
+    float temp;
     int light;
     Color color;
 } SensorData;

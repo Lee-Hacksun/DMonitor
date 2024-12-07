@@ -4,7 +4,7 @@
 
 #include "map.h"
 
-unsigned int hash(const char* key) {
+unsigned int Hash(const char* key) {
     unsigned int hash = 0;
     while (*key) {
         hash = (hash << 5) + *key++; 
@@ -22,7 +22,7 @@ HashMap* CreateHashMap() {
 }
 
 void Put(HashMap* map, const char* key, int value) {
-    unsigned int index = hash(key);
+    unsigned int index = Hash(key);
     Entry *entry = map->table[index];
 
     while (entry != NULL) {
@@ -40,7 +40,7 @@ void Put(HashMap* map, const char* key, int value) {
 }
 
 int Get(HashMap* map, const char* key) {
-    unsigned int index = hash(key);
+    unsigned int index = Hash(key);
     Entry *entry = map->table[index];
     while (entry != NULL) {
         if (strcmp(entry->key, key) == 0) {

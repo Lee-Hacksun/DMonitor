@@ -15,7 +15,7 @@ void SetEXEPath()
     {
         EXEPath[len] = '\0';
         strcpy(EXEPath,dirname(EXEPath));
-        printf("Setup EXEPath : %s\n", EXEPath);
+        //printf("Setup EXEPath : %s\n", EXEPath);
     }
     else
     {

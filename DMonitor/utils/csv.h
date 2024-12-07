@@ -21,7 +21,10 @@ char** Select(char** fields, int* index, char* value);
 char** Distinct(char** fields, int* index, char* value);
 
 CSV* _ParseCSV(FILE* file, Option option, int* index, char* value);
-CSV* ParseCSV(FILE* fileName);
-CSV* ParseCSVOption(FILE* file, Option option, int* index, char* value);
+CSV* ParseCSV(FILE* file, int* column, int* ascending);
+CSV* ParseCSVOption(FILE* file, Option option, int* index, char* value, int* column, int* ascending);
+
+void MergeCSV(char*** arr, int left, int mid, int right, int column, int ascending);
+void MergeSortCSV(char*** arr, int left, int right, int column, int ascending);
 
 #endif

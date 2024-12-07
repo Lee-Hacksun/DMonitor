@@ -7,6 +7,7 @@
 #define CLIENT_LIST_PATH "/ClientList.csv"
 #define PROGRESS_LIST_PATH "/Progress.csv"
 #define SENSOR_PATH "/Sensor.csv"
+#define LOG_FILE_PATH "/ServerLog.log"
 
 #define CLIENT_LIST_CSV_HEADER "clientID,Species,Red,Green,Blue,RegionCode\n"
 #define CLIENT_LIST_CSV_CLIENT_ID 0
@@ -16,14 +17,16 @@
 #define CLIENT_LIST_CSV_COLOR_BLUE 4
 #define CLIENT_LIST_CSV_REGION_CODE 5
 
+#define CLIENT_INFOS_PROGRESS 6
+
 #define PROGRESS_LIST_CSV_HEADER "ClientID,Progress\n"
 #define PROGRESS_LIST_CSV_CLIENT_ID 0
 #define PROGRESS_LIST_CSV_PROGRESS 1
 
 #define SENSOR_CSV_HEADER "ClientID,flame,gas,humidity,light,temp,Red,Green,Blue,Progress\n"
 #define SENSOR_CSV_CLIENT_ID 0
-#define SENSOR_CSV_GAS 1
-#define SENSOR_CSV_FLAME 2
+#define SENSOR_CSV_FLAME 1
+#define SENSOR_CSV_GAS 2
 #define SENSOR_CSV_HUMIDITY 3
 #define SENSOR_CSV_LIGHT 4
 #define SENSOR_CSV_TEMP 5
