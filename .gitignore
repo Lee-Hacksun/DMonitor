@@ -55,6 +55,7 @@ dkms.conf
 DMonitor/build/*
 !DMonitor/build/build.sh
 !DMonitor/build/testData.sh
+build/
 
 #TestDir
 DMonitor/testData
