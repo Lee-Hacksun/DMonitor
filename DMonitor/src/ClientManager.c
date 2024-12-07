@@ -16,11 +16,9 @@
 #include "FileLock.h"
 #include "RWLock.h"
 #include "ServerLauncher.h"
+#include "logger.h"
 
 #pragma region ThreadVariable
-
-// TODO : 뮤텍스 사용 변수
-// LinkedList fireDetectClientID;
 
 RWLock g_color_rwlock;
 Color g_color = {0, 0, 0};
@@ -28,6 +26,10 @@ char g_colorClientID[BUFFER_SIZE] = "";
 
 RWLock g_control_code_rwlock;
 unsigned char g_control_code = 0;
+
+pthread_mutex_t  g_client_list_lock;
+pthread_mutex_t  g_sensor_lock;
+pthread_mutex_t  g_progress_lock;
 
 #pragma endregion
 
@@ -46,22 +48,18 @@ void CheckWorkingDirectory()
 
     struct stat st = {0};
 
-    printf("%s 작업폴더 존재 확인\n", logPath);
     if (stat(logPath, &st) == -1)
     {
-        printf("작업폴더 존재하지 않습니다.\n");
         if (mkdir(logPath, 0700) != 0)
         {
             perror("작업폴더 생성 실패");
         }
         else 
         {
-            printf("작업폴더를 생성했습니다.\n");
         }
     }
     else 
     {
-        printf("작업폴더가 존재합니다.\n");
     }
 
     free(logPath);
@@ -77,7 +75,7 @@ void CheckClientListFile()
 
     if (clientList == NULL)
     {
-        printf("%s 파일이 없습니다. 클라이언트 리스트 파일을 생성합니다.\n", path);
+        LogPrintf("%s 파일이 없습니다. 클라이언트 리스트 파일을 생성합니다.\n", path);
         clientList = fopen(path, "w");
         if (clientList == NULL)
         {
@@ -85,7 +83,8 @@ void CheckClientListFile()
         }
 
         // TODO : 초기값 설정
-        fprintf(clientList, "clientID,Species,Red,Green,Blue,RegionCode\n");
+        fprintf(clientList, CLIENT_LIST_CSV_HEADER);
+        
     }
 
     fclose(clientList);
@@ -104,7 +103,7 @@ void CheckSensorFile()
 
     if (sensor == NULL)
     {
-        printf("%s 파일이 없습니다. 센서 파일을 생성합니다.\n", path);
+        LogPrintf("%s 파일이 없습니다. 센서 파일을 생성합니다.\n", path);
         sensor = fopen(path, "w");
         if (sensor == NULL)
         {
@@ -115,7 +114,7 @@ void CheckSensorFile()
     }
 
     fclose(sensor);
-    pthread_mutex_unlock(&g_client_list_lock);
+    pthread_mutex_unlock(&g_sensor_lock);
 
     free(path);
 }
@@ -130,7 +129,7 @@ void CheckProgressFile()
 
     if (progress == NULL)
     {
-        printf("%s 파일이 없습니다. 프로그레스 파일을 생성합니다.\n", path);
+        LogPrintf("%s 파일이 없습니다. 프로그레스 파일을 생성합니다.\n", path);
         progress = fopen(path, "w");
         if (progress == NULL)
         {
@@ -148,13 +147,23 @@ void CheckProgressFile()
 
 void RunClientManager(int inputPipe)
 {  
+    CheckWorkingDirectory();
+
+    char* path = GetLogDirPath();
+    strcat(path, LOG_FILE_PATH);
+    InitLogger(path);
+    free(path);
+
     int serverSocket = LaunchServer();
     int clientSocket = AcceptClient(serverSocket);
 
     InitRWLock(&g_color_rwlock);
     InitRWLock(&g_control_code_rwlock);
 
-    CheckWorkingDirectory();
+    pthread_mutex_init(&g_client_list_lock, NULL);
+    pthread_mutex_init(&g_sensor_lock, NULL);
+    pthread_mutex_init(&g_progress_lock, NULL);
+
     CheckClientListFile();
     CheckSensorFile();
     CheckProgressFile();
@@ -169,7 +178,7 @@ void RunClientManager(int inputPipe)
 
     while(1)
     {
-        eventPolling.evnetCount = epoll_wait(eventPolling.eventPollingFD, eventPolling.events, EPOLL_SIZE, 1000);
+        eventPolling.evnetCount = epoll_wait(eventPolling.eventPollingFD, eventPolling.events, EPOLL_SIZE, 5000);
         if (eventPolling.evnetCount == -1)
         {
             perror("epoll_wait() faild");
@@ -193,6 +202,7 @@ void RunClientManager(int inputPipe)
                         continue;
                     }                        
                     buffer[readSize] = '\0';
+                    LogPrintf("UI 프로세스로부터 데이터를 받았습니다 : \n%s\n", buffer);
 
                     cJSON* json = cJSON_Parse(buffer);
                     if (json == NULL)
@@ -219,13 +229,12 @@ void RunClientManager(int inputPipe)
 
                         color.Red = cJSON_GetObjectItem(jsonColor, "Red")->valueint;
                         color.Green = cJSON_GetObjectItem(jsonColor, "Green")->valueint;
-                        color.Blue = cJSON_GetObjectItem(jsonColor, "Blue")->valueint;
+                        color.Blue = cJSON_GetObjectItem(jsonColor, "Blue")->valueint;                        
 
                         WriteLock(&g_color_rwlock);
                         SetupColor(clientName, color);
+                        LogPrintf("g_color값을 변경했습니다.(%d, %d, %d)\n g_clientID값을 변경했습니다.(%s)\n", color.Red, color.Green, color.Blue, clientName);
                         WriteUnLock(&g_color_rwlock);
-
-                        cJSON_Delete(json);
                     }
                     else // controlCode setting
                     {
@@ -234,13 +243,13 @@ void RunClientManager(int inputPipe)
                         if (controlCode == 1)
                         {
                             WriteLock(&g_control_code_rwlock);
+                            unsigned  char old_g_control_code = g_control_code;
                             g_control_code &= (LED_RED | LED_GREEN | LED_BLUE);
+                            LogPrintf("controlCode를 %d에서 %d(으)로 변경합니다.\n", old_g_control_code, g_control_code);
                             WriteUnLock(&g_control_code_rwlock);
                         }
-
-                        cJSON_Delete(json);
-                    }
-                    cJSON_Delete(cilentNameJson);                    
+                    }    
+                    cJSON_Delete(json);          
                 }
             }
         }
@@ -249,10 +258,11 @@ void RunClientManager(int inputPipe)
 
         ReadLock(&g_control_code_rwlock);
         cJSON_AddNumberToObject(json, "ControlCode", g_control_code);
-        ReadUnlock(&g_control_code_rwlock);
 
         char* jsonString = cJSON_Print(json);
-        write(clientSocket, jsonString, strlen(jsonString));
+        ssize_t writeSize = write(clientSocket, jsonString, strlen(jsonString));
+        LogPrintf("클라이언트에게 controlCode(%d)를 보냅니다.\n데이터 : \n%s\n", g_control_code, jsonString);
+        ReadUnlock(&g_control_code_rwlock);
         cJSON_Delete(json);
     }
     DestroyEventPolling(&eventPolling);

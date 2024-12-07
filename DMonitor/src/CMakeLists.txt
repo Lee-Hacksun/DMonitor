@@ -19,6 +19,7 @@ set(SOURCES
     ../utils/csv.c
     ../utils/cjson/cJSON.c
     ../utils/map.c
+    ../utils/logger.c
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

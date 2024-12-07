@@ -9,18 +9,12 @@
 #include "FileManager.h"
 #include "FileLock.h"
 
+#include "csv.h"
+
 char EXEPath[PATH_MAX];
 
-pthread_mutex_t  g_client_list_lock;
-pthread_mutex_t  g_sensor_lock;
-pthread_mutex_t  g_progress_lock;
-
 int main()
-{
-    pthread_mutex_init(&g_client_list_lock, NULL);
-    pthread_mutex_init(&g_sensor_lock, NULL);
-    pthread_mutex_init(&g_progress_lock, NULL);
-
+{   
     int inputPipe[2];
     SetEXEPath();
 
@@ -41,7 +35,6 @@ int main()
     {   
         close(inputPipe[1]);
         RunClientManager(inputPipe[0]);
-        exit(1);
     }
     else
     {

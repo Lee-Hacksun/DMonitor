@@ -1,0 +1,72 @@
+[
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/DMonitor.c.o -c /home/laon/IoT/DMonitor/DMonitor/src/DMonitor.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/src/DMonitor.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/GUIManager.c.o -c /home/laon/IoT/DMonitor/DMonitor/src/GUIManager.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/src/GUIManager.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/ClientManager.c.o -c /home/laon/IoT/DMonitor/DMonitor/src/ClientManager.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/src/ClientManager.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/TabPanel.c.o -c /home/laon/IoT/DMonitor/DMonitor/src/TabPanel.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/src/TabPanel.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/ServerLauncher.c.o -c /home/laon/IoT/DMonitor/DMonitor/src/ServerLauncher.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/src/ServerLauncher.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/DMonitorThread.c.o -c /home/laon/IoT/DMonitor/DMonitor/src/DMonitorThread.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/src/DMonitorThread.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/Tree.c.o -c /home/laon/IoT/DMonitor/DMonitor/src/Tree.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/src/Tree.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/Color.c.o -c /home/laon/IoT/DMonitor/DMonitor/src/Color.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/src/Color.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/FileManager.c.o -c /home/laon/IoT/DMonitor/DMonitor/src/FileManager.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/src/FileManager.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/utils/RWLock.c.o -c /home/laon/IoT/DMonitor/DMonitor/utils/RWLock.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/utils/RWLock.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/utils/csv.c.o -c /home/laon/IoT/DMonitor/DMonitor/utils/csv.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/utils/csv.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/utils/cjson/cJSON.c.o -c /home/laon/IoT/DMonitor/DMonitor/utils/cjson/cJSON.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/utils/cjson/cJSON.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/utils/map.c.o -c /home/laon/IoT/DMonitor/DMonitor/utils/map.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/utils/map.c"
+},
+{
+  "directory": "/home/laon/IoT/DMonitor/build",
+  "command": "/usr/bin/gcc -DDEBUG -DTEST -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData -g -o CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/utils/logger.c.o -c /home/laon/IoT/DMonitor/DMonitor/utils/logger.c",
+  "file": "/home/laon/IoT/DMonitor/DMonitor/utils/logger.c"
+}
+]

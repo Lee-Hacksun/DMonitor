@@ -15,6 +15,7 @@
 #include "FileManager.h"
 #include "FileLock.h"
 #include "SensorData.h"
+#include "logger.h"
 
 TotalData* InitTotalData()
 {
@@ -46,13 +47,13 @@ void UpdateProgress(char* clientID, int progress)
         return;
     }
 
-    CSV* csv = ParseCSV(progressFile); 
+    CSV* csv = ParseCSV(progressFile, NULL, NULL); 
     fclose(progressFile);
     pthread_mutex_unlock(&g_progress_lock);
 
     for (int i = 0; i < csv->csvSize; i++)
     {
-        if (strcmp(csv->data[i][PROGRESS_LIST_CSV_CLIENT_ID], clientID))
+        if (strcmp(csv->data[i][PROGRESS_LIST_CSV_CLIENT_ID], clientID) == 0)
         {
             free(csv->data[i][PROGRESS_LIST_CSV_PROGRESS]);
             csv->data[i][PROGRESS_LIST_CSV_PROGRESS] = malloc(sizeof(char) * 3);
@@ -78,67 +79,89 @@ void UpdateProgress(char* clientID, int progress)
 // TODO : 테스트 필요
 void ProcessDataLog(char* clientID, TotalData* totalData)
 {
-    SensorData avgSensorData;
-
+    int avsFlame = 0;
+    int avgGas = 0;
+    float avgHumidity = 0;
+    int avgLigh = 0;
+    float avgTemp = 0;
+    int avgRed = 0;
+    int avgGreen = 0;
+    int avgBlue = 0;
+        
     for (int i = 0; i < totalData->count; i++)
     {
-        avgSensorData.flame += totalData->sensorData[i]->flame;
-        avgSensorData.gas += totalData->sensorData[i]->gas;
-        avgSensorData.humidity += totalData->sensorData[i]->humidity;
-        avgSensorData.light += totalData->sensorData[i]->light;
-        avgSensorData.temp += totalData->sensorData[i]->temp;
+        avsFlame += totalData->sensorData[i]->flame;
+        avgGas += totalData->sensorData[i]->gas;
+        avgHumidity += totalData->sensorData[i]->humidity;
+        avgLigh += totalData->sensorData[i]->light;
+        avgTemp += totalData->sensorData[i]->temp;
 
-        avgSensorData.color.Red += totalData->sensorData[i]->color.Red;
-        avgSensorData.color.Green += totalData->sensorData[i]->color.Green;
-        avgSensorData.color.Blue += totalData->sensorData[i]->color.Blue;
+        avgRed += totalData->sensorData[i]->color.Red;
+        avgGreen += totalData->sensorData[i]->color.Green;
+        avgBlue += totalData->sensorData[i]->color.Blue;
     }
 
-    avgSensorData.flame /= totalData->count;
-    avgSensorData.gas /= totalData->count;
-    avgSensorData.humidity /= totalData->count;
-    avgSensorData.light /= totalData->count;
-    avgSensorData.temp /= totalData->count;
+    avsFlame /= totalData->count;
+    avgGas /= totalData->count;
+    avgHumidity /= totalData->count;
+    avgLigh /= totalData->count;
+    avgTemp /= totalData->count;
 
-    avgSensorData.color.Red /= totalData->count;
-    avgSensorData.color.Green /= totalData->count;
-    avgSensorData.color.Blue /= totalData->count;
+    avgRed /= totalData->count;
+    avgGreen /= totalData->count;
+    avgBlue /= totalData->count;
 
     char* path = GetLogDirPath();
     strcat(path, SENSOR_PATH);
 
+if (pthread_mutex_trylock(&g_sensor_lock) == 0) {
+    // 잠금이 성공한 경우
+    LogPrintf("Lock acquired successfully!\n");
+    pthread_mutex_unlock(&g_sensor_lock); // 작업 끝나면 잠금 해제
+} else {
+    // 잠금이 실패한 경우
+    LogPrintf("Lock is already held by another thread.\n");
+}
+
     pthread_mutex_lock(&g_sensor_lock);
-    FILE* sensorLog = fopen(path, "r");
+
+    FILE* sensorLog = fopen(path, "a+");
     if (sensorLog == NULL)
     {
-        printf("센서 데이터 파일을 생성합니다.\n");
-        FILE* sensorLog = fopen(path, "a+");
-        if (sensorLog == NULL)
-        {
-            perror("fopen");
-            return;
-        }
-        fprintf(sensorLog, "ClientID,flame,gas,humidity,light,temp,Red,Green,Blue,Progress\n");
+        perror("fopen");
     }
 
-    int progress = GetColorDistance(GetRegisteredColor(clientID), avgSensorData.color);
+    Color color;
+    color.Red = avgRed;
+    color.Green = avgGreen;
+    color.Blue = avgBlue;
 
-    fprintf(sensorLog, "%s,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+    int progress = GetColorDistance(GetRegisteredColor(clientID), color);
+
+    fprintf(sensorLog, "%s,%d,%d,%.2f,%d,%.2f,%d,%d,%d,%d\n",
     clientID, 
-    avgSensorData.flame, 
-    avgSensorData.gas, 
-    avgSensorData.humidity, 
-    avgSensorData.light, 
-    avgSensorData.temp, 
-    avgSensorData.color.Red, 
-    avgSensorData.color.Green, 
-    avgSensorData.color.Blue,
+    (int)avsFlame, 
+    (int)avgGas, 
+    (float)avgHumidity, 
+    (int)avgLigh, 
+    (float)avgTemp, 
+    (int)color.Red, 
+    (int)color.Green, 
+    (int)color.Blue,
     progress);
 
     UpdateProgress(clientID, progress);
 
+    LogPrintf("클라이언트(%s)의 센서 데이터와 진행률 데이터를 갱신했습니다.\n", clientID);
+
     fclose(sensorLog);
     pthread_mutex_unlock(&g_sensor_lock);
 
+    for (int i = 0; i < totalData->count; i++)
+    {
+        free(totalData->sensorData[i]);
+    }
+    totalData->count = 0;
     free(path);
 }
 
@@ -164,8 +187,11 @@ void SetupControlCode(unsigned char code)
     if (isChaged)
     {
         WriteLock(&g_control_code_rwlock);
-        printf("g_control_code가 %d에서 %d으로 바뀝니다.\n", g_control_code, code);
-        g_control_code = code;
+        if (g_control_code != code)
+        {
+            g_control_code = code;
+            LogPrintf("g_control_code가 %d에서 %d으로 바뀝니다.\n", g_control_code, code);
+        }
         WriteUnLock(&g_control_code_rwlock);
     }
 }
@@ -183,7 +209,7 @@ char* RegistClient(int clientSocket)
         return NULL;
     }
     buffer[readSize] = '\0';
-    printf("클라이언트로부터 클라이언트 정보를 받았습니다\n%s\n", buffer);
+    LogPrintf("클라이언트(%d)로부터 클라이언트 등록 정보를 받았습니다\n%s\n", clientSocket, buffer);
 
     cJSON* json = cJSON_Parse(buffer);
     char* clientID = cJSON_GetObjectItem(json, "clientID")->valuestring;
@@ -209,7 +235,7 @@ char* RegistClient(int clientSocket)
     }
 
     int isExist = 0;
-    CSV* csv = ParseCSV(clientList);
+    CSV* csv = ParseCSV(clientList, NULL, NULL);
     for (int i = 0; i < csv->csvSize; i++)
     {
         if (strcmp(csv->data[i][CLIENT_LIST_CSV_CLIENT_ID], clientID) == 0)
@@ -222,7 +248,7 @@ char* RegistClient(int clientSocket)
 
     if(!isExist)
     {
-        printf("클라이언트 정보가 없습니다. 클라이언트(%s)를 등록합니다.", clientID);
+        LogPrintf("클라이언트 정보가 없습니다. 클라이언트(%s)를 등록합니다.\n", clientID);
         if((color.Red == 0) && (color.Green == 0) && (color.Blue == 0))
         {
             if (strcmp(species, CHEERY_BLOSSOM) == 0)
@@ -238,8 +264,21 @@ char* RegistClient(int clientSocket)
                 ASSERT(0, "올바르지 않은 종 이름");
             }
         }
+        char* progPath = GetLogDirPath();
+        strcat(progPath, PROGRESS_LIST_PATH);
+        FILE* progreeList = fopen(progPath, "a+");
+        {
+            if (progreeList == NULL)
+            {
+                perror("fopen");
+            }
+        }
+
         fprintf(clientList, "%s,%s,%d,%d,%d,%s\n", clientID, species, color.Red, color.Green, color.Blue, regionCode);
-        printf("클라이언트가 새로 등록되었습니다. : %s\n", clientID);
+        fprintf(progreeList, "%s,0", clientID);
+        fclose(progreeList);
+
+        LogPrintf("클라이언트가 새로 등록되었습니다. : %s\n", clientID);
     }
     strcpy(nowClientID, clientID);
 
@@ -264,11 +303,11 @@ SensorData* ReadSensorData(int clientSocket)
     }
     else if (readSize == 0)
     {
-        printf("클라이언트가 연결을 종료했습니다.\n");
+        LogPrintf("클라이언트(%d)가 연결을 종료했습니다.\n", clientSocket);
         return NULL;
     }
     buffer[readSize] = '\0';
-    printf("클라이언트로부터 받은 센서 데이터: %s\n", buffer);
+    LogPrintf("클라이언트(%d)로부터 받은 센서 데이터: %s\n", clientSocket, buffer);
     
     SensorData* sensorData = malloc(sizeof(SensorData));
     cJSON* json = cJSON_Parse(buffer);
@@ -282,9 +321,9 @@ SensorData* ReadSensorData(int clientSocket)
 
     sensorData->flame = cJSON_GetObjectItem(senSorDatajson, "Flame")->valueint;
     sensorData->gas = cJSON_GetObjectItem(senSorDatajson, "Gas")->valueint;
-    sensorData->humidity = cJSON_GetObjectItem(senSorDatajson, "Humidity")->valueint;
+    sensorData->humidity = (float)cJSON_GetObjectItem(senSorDatajson, "Humidity")->valuedouble;
     sensorData->light = cJSON_GetObjectItem(senSorDatajson, "Light")->valueint;
-    sensorData->temp = cJSON_GetObjectItem(senSorDatajson, "Temp")->valueint;
+    sensorData->temp = (float)cJSON_GetObjectItem(senSorDatajson, "Temperature")->valuedouble;
 
     cJSON* jsonColor = cJSON_GetObjectItem(senSorDatajson, "Color");
     sensorData->color.Red = cJSON_GetObjectItem(jsonColor, "Red")->valueint;
@@ -310,7 +349,7 @@ Color GetRegisteredColor(char* clientID)
     }
 
     int index = CLIENT_LIST_CSV_CLIENT_ID;
-    CSV* registeredData = ParseCSVOption(clientList, Select, &index, clientID);
+    CSV* registeredData = ParseCSVOption(clientList, Select, &index, clientID, NULL, NULL);
     free(path);
     fclose(clientList);
     pthread_mutex_unlock(&g_client_list_lock);
@@ -339,25 +378,38 @@ void* DMonitorThreadAction(void* arg)
     int isLEDSelected = 0;
     Color color = GetRegisteredColor(clientID);
     int colorDistance = -1;
-    printf("1\n");
     unsigned char controlCode = 0;
 
     time_t currentTime;
     struct tm localTime;
     int currentDay;
+    int currentMin;
 
     time(&currentTime);
     localtime_r(&currentTime, &localTime);
     currentDay = localTime.tm_mday;
+    currentMin = localTime.tm_min;
     while(1)
     {
         time(&currentTime);
         localtime_r(&currentTime, &localTime);
-        if (currentDay != localTime.tm_mday)
+        #if !TEST
         {
-            ProcessDataLog(clientID, totalData);
-            currentDay = localTime.tm_mday;
+            if (currentDay != localTime.tm_mday)
+            {
+                ProcessDataLog(clientID, totalData);
+                currentDay = localTime.tm_mday;
+            }
         }
+        #elif TEST
+        {
+            if (currentMin != localTime.tm_min)
+            {
+                ProcessDataLog(clientID, totalData);
+                currentMin = localTime.tm_min;
+            }
+        }
+        #endif
 
         SensorData* sensorData = ReadSensorData(clientSocket);
         if (sensorData == NULL)
@@ -366,9 +418,10 @@ void* DMonitorThreadAction(void* arg)
         }
         totalData->sensorData[totalData->count++] = sensorData;
 
-        if (!(sensorData->flame == 1))
+        if (sensorData->flame == 1)
         {
             controlCode |= EMERGENCY | IS_CHANGED | BUZZER;
+            LogPrintf("클라이언트(%s)에서 화재를 감지했습니다. \n제어코드를 %d로 변경했습니다.\n", clientID, controlCode);
         }
 
         ReadLock(&g_color_rwlock);
@@ -388,9 +441,11 @@ void* DMonitorThreadAction(void* arg)
         // TODO : 테스트 필요
         if (isLEDSelected)
         {   
+            LogPrintf("[ %s ] 클라이언트가 선택되었습니다. 해당 클라이언트의 센서 정보를 추적합니다.\n", clientID);
+
             int processLEDPercentage = 0;
             ReadLock(&g_color_rwlock);
-            if ((g_color.Red != 0) | (g_color.Green != 0) | (g_color.Blue != 0))
+            if ((g_color.Red == 0) & (g_color.Green == 0) & (g_color.Blue == 0))
             {
                 processLEDPercentage = GetColorDistance(g_color, sensorData->color);
             }
@@ -415,7 +470,7 @@ void* DMonitorThreadAction(void* arg)
             }
         }
         
-        SetupControlCode(controlCode);
+        SetupControlCode(controlCode);        
         controlCode = 0;        
 
         sleep(1);
@@ -433,4 +488,6 @@ void DMonitorThreadCreate(int clientSocket)
 
     pthread_create(&threadID, NULL, DMonitorThreadAction, (void*)_clientSocket);
     pthread_detach(threadID);
+
+    LogPrintf("센서 클라이언트(%d)와 연결을 성공했습니다.\n", clientSocket);
 }
