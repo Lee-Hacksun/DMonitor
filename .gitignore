@@ -58,6 +58,6 @@ DMonitor/build/*
 build/
 
 #TestDir
-DMonitor/testData
+DMonitor/testData/
 
 .vscode/
