@@ -4,6 +4,7 @@ project(DMonitor VERSION 1.0)
 set(CMAKE_BUILD_TYPE STREQUAL "Test" CACHE STRING "Test build type")
 
 include_directories(../utils)
+include_directories(../AiModel)
 
 set(SOURCES 
     DMonitor.c 
@@ -20,6 +21,7 @@ set(SOURCES
     ../utils/cjson/cJSON.c
     ../utils/map.c
     ../utils/logger.c
+    ../AiModel/ai.c
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
