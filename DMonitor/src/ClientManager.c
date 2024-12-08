@@ -268,5 +268,10 @@ void RunClientManager(int inputPipe)
     DestroyEventPolling(&eventPolling);
     DestroyRWLock(&g_color_rwlock);
     DestroyRWLock(&g_control_code_rwlock);
+
+    pthread_mutex_destroy(&g_client_list_lock);
+    pthread_mutex_destroy(&g_sensor_lock);
+    pthread_mutex_destroy(&g_progress_lock);
+    
     close(serverSocket);
 }

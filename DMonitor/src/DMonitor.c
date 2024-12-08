@@ -7,9 +7,6 @@
 
 #include "DebugUtil.h"
 #include "FileManager.h"
-#include "FileLock.h"
-
-#include "csv.h"
 
 char EXEPath[PATH_MAX];
 
@@ -41,10 +38,6 @@ int main()
         close(inputPipe[0]);
         RunGUIManager(inputPipe[1]);
     }
-
-    pthread_mutex_destroy(&g_client_list_lock);
-    pthread_mutex_destroy(&g_sensor_lock);
-    pthread_mutex_destroy(&g_progress_lock);
 
     exit(0);
 }

@@ -13,6 +13,7 @@
 #include "GUIManager.h"
 #include "TabPanel.h"
 #include "Tree.h"
+#include "ai.h"
 
 int clientDetailInfosSize = 0;
 ClientDetailInfos* clientDetailInfos = NULL;
@@ -237,7 +238,7 @@ void GetDetailPanel(WINDOW* win, char* clientID)
     DestroyCSV(csv);
 
     // 문자열 만들기 
-    clientDetailInfosString = malloc(sizeof(char*) * clientDetailInfosSize + 1);
+    clientDetailInfosString = malloc(sizeof(char*) * clientDetailInfosSize + 2);
     clientDetailInfosString[0] = malloc(sizeof(char) * COLS - MARGIN_LEFT * 2);
     sprintf(clientDetailInfosString[0], "%-10s %-10s %-10s %-10s %-15s %-10s %-10s %-10s %-10s\n", "Flame", "Gas", "Humidity", "Light", "Temperature", "Red", "Green", "Blue", "Progress");
 
@@ -245,7 +246,32 @@ void GetDetailPanel(WINDOW* win, char* clientID)
     {
         clientDetailInfosString[i] = malloc(sizeof(char) * COLS - MARGIN_LEFT * 2);
         sprintf(clientDetailInfosString[i], "%-10d %-10d %-10.2f %-10d %-15.2f %-10d %-10d %-10d %d%%\n", clientDetailInfos[i - 1].flame, clientDetailInfos[i - 1].gas, clientDetailInfos[i - 1].humidity, clientDetailInfos[i - 1].light, clientDetailInfos[i - 1].temp, clientDetailInfos[i - 1].colorRed, clientDetailInfos[i - 1].colorGreen, clientDetailInfos[i - 1].colorBlue, clientDetailInfos[i - 1].progress);
+    }// *regionCode, char **species, int16_t temperature, int16_t humidity, int16_t light);
+
+
+    // 절정일 예측
+
+    if (clientDetailInfosSize > 1)
+    {
+        path = GetLogDirPath();
+        strcat(path, CLIENT_LIST_PATH);
+
+        csvFile = fopen(path, "r");
+        if (csvFile == NULL)
+        {
+            perror("fopen");
+            return;
+        }
+    
+        index = CLIENT_LIST_CSV_CLIENT_ID;
+        csv = ParseCSVOption(csvFile, Select, &index, clientID, NULL, NULL);
+
+        char* predictDate = PredictPeakDay(csv->data[0][CLIENT_LIST_CSV_REGION_CODE], csv->data[0][CLIENT_LIST_CSV_SPECIES], clientDetailInfos[clientDetailInfosSize - 1].temp, clientDetailInfos[clientDetailInfosSize - 1].humidity, clientDetailInfos[clientDetailInfosSize - 1].light);
+        strcpy(clientDetailInfosString[clientDetailInfosSize],predictDate);
+        free(path);
+        free(csv);
     }
+
 
     clientDetailPanelMessage = NewPanelMessage(clientDetailInfosString, clientDetailInfosSize + 1);
     clientDetailPanel = wNewPanel(win, MARGIN_TOP, MARGIN_LEFT, clientDetailPanelMessage);
