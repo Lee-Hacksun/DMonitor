@@ -1,4 +1,0 @@
-clientID: 3123
- Color: 3, 3, 3
-clientID: 3123
- Color: 3, 3, 3

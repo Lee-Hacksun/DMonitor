@@ -1,3 +1,0 @@
-/home/ubuntu/DMonitor/build/CMakeFiles/DMonitor.dir
-/home/ubuntu/DMonitor/build/CMakeFiles/edit_cache.dir
-/home/ubuntu/DMonitor/build/CMakeFiles/rebuild_cache.dir
