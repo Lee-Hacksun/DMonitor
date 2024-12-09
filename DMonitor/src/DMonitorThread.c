@@ -290,6 +290,15 @@ char* RegistClient(int clientSocket)
     return nowClientID;
 }
 
+int clamp(int value, int min, int max) {
+    if (value < min) {
+        return min;
+    } else if (value > max) {
+        return max;
+    }
+    return value;
+}
+
 SensorData* ReadSensorData(int clientSocket)
 {
     char buffer[BUFFER_SIZE];
@@ -326,9 +335,9 @@ SensorData* ReadSensorData(int clientSocket)
     sensorData->temp = (float)cJSON_GetObjectItem(senSorDatajson, "Temperature")->valuedouble;
 
     cJSON* jsonColor = cJSON_GetObjectItem(senSorDatajson, "Color");
-    sensorData->color.Red = cJSON_GetObjectItem(jsonColor, "Red")->valueint;
-    sensorData->color.Green = cJSON_GetObjectItem(jsonColor, "Green")->valueint;
-    sensorData->color.Blue = cJSON_GetObjectItem(jsonColor, "Blue")->valueint;
+    sensorData->color.Red = clamp(cJSON_GetObjectItem(jsonColor, "Red")->valueint, 0, 255);
+    sensorData->color.Green = clamp(cJSON_GetObjectItem(jsonColor, "Green")->valueint, 0, 255);
+    sensorData->color.Blue = clamp(cJSON_GetObjectItem(jsonColor, "Blue")->valueint, 0, 255);
 
     return sensorData;
 }
