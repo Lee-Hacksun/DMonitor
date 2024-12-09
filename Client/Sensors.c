@@ -7,7 +7,7 @@
 #include "Sensor/GasSensor.c"
 #include "Sensor/LightSensor.c"
 
-typedef struct
+typedef struct _SensorData
 {
     DHT11_Data dht11;
     ColorData color;

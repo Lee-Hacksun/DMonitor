@@ -345,6 +345,30 @@ Tree.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/DMonitor.dir/build.make CMakeFiles/DMonitor.dir/Tree.c.s
 .PHONY : Tree.c.s
 
+home/laon/IoT/DMonitor/DMonitor/AiModel/ai.o: home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.o
+.PHONY : home/laon/IoT/DMonitor/DMonitor/AiModel/ai.o
+
+# target to build an object file
+home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/DMonitor.dir/build.make CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.o
+.PHONY : home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.o
+
+home/laon/IoT/DMonitor/DMonitor/AiModel/ai.i: home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.i
+.PHONY : home/laon/IoT/DMonitor/DMonitor/AiModel/ai.i
+
+# target to preprocess a source file
+home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/DMonitor.dir/build.make CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.i
+.PHONY : home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.i
+
+home/laon/IoT/DMonitor/DMonitor/AiModel/ai.s: home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.s
+.PHONY : home/laon/IoT/DMonitor/DMonitor/AiModel/ai.s
+
+# target to generate assembly for a file
+home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/DMonitor.dir/build.make CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.s
+.PHONY : home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.s
+
 home/laon/IoT/DMonitor/DMonitor/utils/RWLock.o: home/laon/IoT/DMonitor/DMonitor/utils/RWLock.c.o
 .PHONY : home/laon/IoT/DMonitor/DMonitor/utils/RWLock.o
 
@@ -501,6 +525,9 @@ help:
 	@echo "... Tree.o"
 	@echo "... Tree.i"
 	@echo "... Tree.s"
+	@echo "... home/laon/IoT/DMonitor/DMonitor/AiModel/ai.o"
+	@echo "... home/laon/IoT/DMonitor/DMonitor/AiModel/ai.i"
+	@echo "... home/laon/IoT/DMonitor/DMonitor/AiModel/ai.s"
 	@echo "... home/laon/IoT/DMonitor/DMonitor/utils/RWLock.o"
 	@echo "... home/laon/IoT/DMonitor/DMonitor/utils/RWLock.i"
 	@echo "... home/laon/IoT/DMonitor/DMonitor/utils/RWLock.s"
