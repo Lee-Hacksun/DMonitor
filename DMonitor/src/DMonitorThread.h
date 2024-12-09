@@ -37,6 +37,7 @@ void SetupControlCode(unsigned char code);
 
 char* RegistClient(int clientSocket);
 
+int clamp(int value, int min, int max);
 SensorData* ReadSensorData(int clientSocket);
 Color GetRegisteredColor(char* clientID);
 
