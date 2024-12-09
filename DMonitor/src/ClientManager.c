@@ -208,7 +208,7 @@ void RunClientManager(int inputPipe)
                     if (json == NULL)
                     {
                         ASSERT(0, "Failed to parse json");
-                        continue;
+                        break;
                     }
 
                     cJSON* cilentNameJson = cJSON_GetObjectItem(json, "clientID");
