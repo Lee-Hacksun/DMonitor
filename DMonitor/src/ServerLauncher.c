@@ -69,7 +69,6 @@ void AcceptMultiClient(int serverSocket)
     int clientAddressSize = sizeof(clientAddress);
     if((clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientAddressSize)) < 0)
     {
-        // TODO : 에러 핸들링 추가
         exit(EXIT_FAILURE);
     }
     DMonitorThreadCreate(clientSocket);

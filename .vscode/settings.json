@@ -15,5 +15,6 @@
         "debugutil.h": "c",
         "pthread.h": "c"
     },
-    "cmake.sourceDirectory": "/home/laon/IoT/DMonitor/DMonitor/src"
+    "cmake.sourceDirectory": "/home/laon/IoT/DMonitor/DMonitor/src",
+    "cmake.ignoreCMakeListsMissing": true
 }
