@@ -445,13 +445,13 @@ void* DMonitorThreadAction(void* arg)
 
             int processLEDPercentage = 0;
             ReadLock(&g_color_rwlock);
-            if ((g_color.Red == 0) & (g_color.Green == 0) & (g_color.Blue == 0))
+            if ((g_color.Red == 0) && (g_color.Green == 0) && (g_color.Blue == 0))
             {
-                processLEDPercentage = GetColorDistance(g_color, sensorData->color);
+                processLEDPercentage = GetColorDistance(GetRegisteredColor(clientID), sensorData->color);
             }
             else
             {
-                processLEDPercentage = GetColorDistance(GetRegisteredColor(clientID), sensorData->color);
+                processLEDPercentage = GetColorDistance(g_color, sensorData->color);
             }
             ReadUnlock(&g_color_rwlock);
             
