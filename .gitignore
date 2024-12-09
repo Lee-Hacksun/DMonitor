@@ -50,6 +50,14 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
-
+# CMake
+DMonitor/build/*
+!DMonitor/build/build.sh
+!DMonitor/build/testData.sh
 build/
-!build/build.sh
+
+#TestDir
+DMonitor/testData/
+
+.vscode/
+
