@@ -31,6 +31,7 @@ char* help[HELP_MESSAGE_SIZE] =
     "H : display manual",
     "Q : return to Overview",
     "B : Turn off buzzer",
+    "R : Refresh the window",
     "",
     "[[DtailView]]",
     "C : color assignment"
