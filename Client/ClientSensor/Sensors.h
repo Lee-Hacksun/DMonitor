@@ -44,6 +44,8 @@
             int light;
         } SensorData;
 
+        int clamp(int value, int min, int max);
+
         // 센서 초기화
         int InitSensors(void);
 
