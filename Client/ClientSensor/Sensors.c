@@ -15,6 +15,13 @@
         return min + scale * (max - min);
     }
 #else
+    int clamp(int value, int min, int max) {
+        value = value / 3000 * 250;
+        if (value < min) return min;
+        if (value > max) return max;
+        return value;
+    }
+
     int InitSensors(void)
     {
         if (InitColorSensor() == -1)
@@ -113,6 +120,10 @@ SensorData runSensors(void)
         while (1)
         {
             SensorData sensorData = ReadSensors();
+
+            sensorData.color.red = clamp(sensorData.color.red, 0, 255);
+            sensorData.color.green = clamp(sensorData.color.green, 0, 255);
+            sensorData.color.blue = clamp(sensorData.color.blue, 0, 255);
 
             printf("Current temperature: %.1f°C\n", sensorData.dht11.temperature);
             printf("Current humidity: %.1f%%\n", sensorData.dht11.humidity);
