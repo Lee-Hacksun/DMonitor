@@ -13,7 +13,8 @@
         "utility": "c",
         "serverlauncher.h": "c",
         "debugutil.h": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "filelock.h": "c"
     },
     "cmake.sourceDirectory": "/home/laon/IoT/DMonitor/DMonitor/src"
 }

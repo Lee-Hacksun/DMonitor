@@ -17,6 +17,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/DMonitor.dir/TabPanel.c.o.d"
   "CMakeFiles/DMonitor.dir/Tree.c.o"
   "CMakeFiles/DMonitor.dir/Tree.c.o.d"
+  "CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.o"
+  "CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/AiModel/ai.c.o.d"
   "CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/utils/RWLock.c.o"
   "CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/utils/RWLock.c.o.d"
   "CMakeFiles/DMonitor.dir/home/laon/IoT/DMonitor/DMonitor/utils/cjson/cJSON.c.o"

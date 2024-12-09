@@ -4,7 +4,7 @@
 # compile C with /usr/bin/gcc
 C_DEFINES = -DDEBUG -DTEST
 
-C_INCLUDES = -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../testData
+C_INCLUDES = -I/home/laon/IoT/DMonitor/DMonitor/src/../utils -I/home/laon/IoT/DMonitor/DMonitor/src/../AiModel -I/home/laon/IoT/DMonitor/DMonitor/src/../testData
 
 C_FLAGS = -g
 
